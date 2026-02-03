@@ -101,7 +101,7 @@ class maniPage extends StatefulWidget {
 }
 
 class _maniPageState extends State<maniPage> {
-  int currentIndex = 1;
+  int currentIndex = 0;
 
   List dashboardScreens = [
     homePageScreen(),
