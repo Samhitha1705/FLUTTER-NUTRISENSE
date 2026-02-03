@@ -5,6 +5,7 @@ import 'package:my_app/liveCoach.dart';
 import 'package:my_app/main.dart';
 import 'package:my_app/mealsScreen.dart';
 import 'package:my_app/personSuggest.dart';
+import 'package:my_app/totalFoodItems.dart';
 
 // class maniPage extends StatefulWidget {
 //   String phone;
@@ -100,10 +101,11 @@ class maniPage extends StatefulWidget {
 }
 
 class _maniPageState extends State<maniPage> {
-  int currentIndex = 0;
+  int currentIndex = 1;
 
   List dashboardScreens = [
     homePageScreen(),
+    Totalfooditems(),
     Mealsscreen(),
     liveCoachScreen(),
     Personsuggest(),
@@ -117,7 +119,34 @@ class _maniPageState extends State<maniPage> {
         backgroundColor: Colors.blue,
         title:Text("Dashboard Page"),
         actions: [
-          Icon(Icons.search_outlined, color: Colors.white,),
+          Icon(Icons.search_outlined, color: Colors.white),
+          InkWell(
+            onTap: () {
+              showModalBottomSheet(context: context, builder: (cxt){
+                return Column(
+                  children: [
+                    Text("Filter Data"),
+                    ListTile(
+                      leading: CircleAvatar(),
+                      title:Text("Filter by Names")),
+                    ListTile(
+                      leading: CircleAvatar(),
+                      title:Text("Filter by Prices")),
+                    ListTile(
+                      leading: CircleAvatar(),
+                      title:Text("Filter by Foods")),
+
+                    TextButton(onPressed: (){
+                      Navigator.pop(context);
+                    }, child: Text("Close It"))
+                  ],
+                );
+              });
+            },
+            child: 
+              Icon(Icons.filter_alt),
+            
+          ),
           IconButton(onPressed: (){
             Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(
               builder: (context) => MyApp(FirstName: ""),
@@ -186,6 +215,7 @@ class _maniPageState extends State<maniPage> {
         },
         items: [
         BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label:"Home"),
+        BottomNavigationBarItem(icon: Icon(Icons.food_bank), label:"Foods"),
         BottomNavigationBarItem(icon: Icon(Icons.room_service_outlined),label:"Meals"),
         BottomNavigationBarItem(icon: Icon(Icons.live_help_outlined),label:"Live Coach"),
         BottomNavigationBarItem(icon:Icon(Icons.person_outline_outlined), label:"You"),
