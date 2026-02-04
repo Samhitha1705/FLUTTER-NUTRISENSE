@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:my_app/customerReview.dart';
 import 'package:my_app/homePage.dart';
 import 'package:my_app/liveCoach.dart';
 import 'package:my_app/main.dart';
@@ -185,6 +186,10 @@ class _maniPageState extends State<maniPage> {
             TextButton.icon(onPressed: (){
               Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (cxt)=>maniPage(phone: '',)), (route)=>false);
             },icon: Icon(Icons.home), label: Text("Home")),
+            Divider(),
+            TextButton.icon(onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (cxt)=> reviewsPage()));
+            }, icon:Icon(Icons.rate_review_sharp), label: Text("Reviews")),
             Divider(),
             TextButton.icon(onPressed: (){}, icon:Icon(Icons.room_service_outlined), label: Text("My Orders")),
             Divider(),
