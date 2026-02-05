@@ -149,9 +149,23 @@ class _maniPageState extends State<maniPage> {
             
           ),
           IconButton(onPressed: (){
-            Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(
-              builder: (context) => MyApp(FirstName: ""),
-            ), (route)=> false);
+            // Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(
+            //   builder: (context) => MyApp(FirstName: ""),
+            // ), (route)=> false);
+            showDialog(context: context, builder: (cxt){
+                  return AlertDialog(
+                    title: Text("Logout"),
+                    content: Text("Do you really want to Logout?"),
+                    actions: [
+                      TextButton(onPressed: (){
+                        Navigator.pop(context);
+                      }, child: Text("No")),
+                      TextButton(onPressed: (){
+                        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (cxt)=> MyApp(FirstName: '')), (route)=> false);
+                      }, child: Text("Yes"))
+                    ],
+                  );
+            });
           }, icon: Icon(Icons.logout))
         ],
       ),
