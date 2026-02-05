@@ -15,7 +15,8 @@ class Mealsscreen extends StatelessWidget {
         itemCount: FoodItemList.length,
         itemBuilder: (context, index) {
         // return Text(FoodItemList[index]);
-        return Card(
+        //ll
+          return Card(
           child: ListTile(
             onTap: () {
               Navigator.push(context, MaterialPageRoute(builder: (cxt)=> Aboutfood(title: FoodItemList[index],Description: "NA", image: "https://cdn.britannica.com/95/223595-004-36F9B6AF.jpg",)));
