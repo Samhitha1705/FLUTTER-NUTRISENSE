@@ -17,15 +17,9 @@ class Mealsscreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ✅ BACK BUTTON AUTOMATICALLY APPEARS
       appBar: AppBar(
         title: const Text("Meals"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context); // 👈 go back
-          },
-        ),
+        automaticallyImplyLeading: false, // ✅ removes the back button
       ),
 
       body: ListView.builder(

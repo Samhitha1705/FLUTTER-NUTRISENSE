@@ -16,10 +16,8 @@ class _homePageScreenState extends State<homePageScreen> {
   String? selectedTime;
   String? selectedNutritionist;
 
-  // store booked slots per date (format: "Nutritionist-Slot")
   final Map<DateTime, Set<String>> bookedSlots = {};
 
-  // list of nutritionists
   final List<String> nutritionists = [
     "Dr. Ananya Sharma",
     "Mr. Rajesh Kumar",
@@ -34,7 +32,7 @@ class _homePageScreenState extends State<homePageScreen> {
     return "Good Evening";
   }
 
-  // -------- DYNAMIC SLOTS --------
+  // -------- TIME SLOTS --------
   List<String> generateSlots() {
     final List<String> slots = [];
     for (int h = 9; h <= 19; h++) {
@@ -66,6 +64,7 @@ class _homePageScreenState extends State<homePageScreen> {
           _featuredMeals(),
           const SizedBox(height: 24),
           _followPlanCard(),
+          const SizedBox(height: 40),
         ],
       ),
     );
@@ -85,11 +84,10 @@ class _homePageScreenState extends State<homePageScreen> {
         ),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "${getGreeting()} 👋",
+            getGreeting(), // 👋 removed
             style: const TextStyle(color: Colors.white70, fontSize: 16),
           ),
           const SizedBox(height: 8),
@@ -236,7 +234,9 @@ class _homePageScreenState extends State<homePageScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              "Appointment with $selectedNutritionist on ${selectedDate!.day}-${selectedDate!.month}-${selectedDate!.year} at $selectedTime",
+              "Appointment with $selectedNutritionist on "
+                  "${selectedDate!.day}-${selectedDate!.month}-${selectedDate!.year} "
+                  "at $selectedTime",
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
@@ -308,10 +308,9 @@ class _homePageScreenState extends State<homePageScreen> {
     );
   }
 
-  // -------- FOLLOW NUTRITION PLAN --------
+  // -------- FOLLOW PLAN --------
   Widget _followPlanCard() {
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
@@ -319,7 +318,8 @@ class _homePageScreenState extends State<homePageScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.assignment_turned_in, size: 40, color: Colors.orange),
+          const Icon(Icons.assignment_turned_in,
+              size: 40, color: Colors.orange),
           const SizedBox(width: 16),
           const Expanded(
             child: Text(
@@ -328,9 +328,7 @@ class _homePageScreenState extends State<homePageScreen> {
             ),
           ),
           ElevatedButton(
-            onPressed: () {
-              // Navigate to nutrition plan screen if implemented
-            },
+            onPressed: () {},
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.orange,
               shape: RoundedRectangleBorder(
@@ -344,7 +342,7 @@ class _homePageScreenState extends State<homePageScreen> {
     );
   }
 
-  // -------- BOTTOM SHEET --------
+  // -------- BOTTOM SHEET (UNIVERSAL SAFE) --------
   void _openAppointmentSheet() {
     final slots = generateSlots();
 
@@ -355,106 +353,120 @@ class _homePageScreenState extends State<homePageScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (_) {
-        return StatefulBuilder(
-          builder: (context, setModal) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 16,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      "Select Appointment",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Nutritionist Dropdown
-                    DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(
-                        labelText: "Select Nutritionist",
-                        border: OutlineInputBorder(),
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: StatefulBuilder(
+              builder: (context, setModal) {
+                return SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        "Select Appointment",
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
-                      value: selectedNutritionist,
-                      items: nutritionists.map((name) {
-                        return DropdownMenuItem(
-                          value: name,
-                          child: Text(name),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setModal(() {
-                          selectedNutritionist = value;
-                          selectedDate = null;
-                          selectedTime = null;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
+                      const SizedBox(height: 12),
 
-                    // Date Picker
-                    ListTile(
-                      leading: const Icon(Icons.date_range),
-                      title: Text(selectedDate == null
-                          ? "Select Date"
-                          : "${selectedDate!.day}-${selectedDate!.month}-${selectedDate!.year}"),
-                      onTap: selectedNutritionist == null
-                          ? null
-                          : () async {
-                        final picked = await showDatePicker(
-                          context: context,
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime.now().add(const Duration(days: 30)),
-                        );
-                        if (picked != null) {
+                      DropdownButtonFormField<String>(
+                        decoration: const InputDecoration(
+                          labelText: "Select Nutritionist",
+                          border: OutlineInputBorder(),
+                        ),
+                        value: selectedNutritionist,
+                        items: nutritionists
+                            .map((n) =>
+                            DropdownMenuItem(value: n, child: Text(n)))
+                            .toList(),
+                        onChanged: (v) {
                           setModal(() {
-                            selectedDate = picked;
+                            selectedNutritionist = v;
+                            selectedDate = null;
                             selectedTime = null;
                           });
-                        }
-                      },
-                    ),
+                        },
+                      ),
 
-                    // Slots
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: slots.map((slot) {
-                        bool isBooked = bookedSlots[selectedDate]?.contains("$selectedNutritionist-$slot") ?? false;
+                      const SizedBox(height: 12),
 
-                        return ChoiceChip(
-                          label: Text(slot),
-                          selected: selectedTime == slot,
-                          onSelected: isBooked ? null : (_) => setModal(() => selectedTime = slot),
-                          backgroundColor: isBooked ? Colors.red.shade100 : null,
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: selectedNutritionist != null &&
-                          selectedDate != null &&
-                          selectedTime != null
-                          ? () {
-                        bookedSlots.putIfAbsent(selectedDate!, () => <String>{});
-                        bookedSlots[selectedDate!]!.add("$selectedNutritionist-$selectedTime");
+                      ListTile(
+                        leading: const Icon(Icons.date_range),
+                        title: Text(selectedDate == null
+                            ? "Select Date"
+                            : "${selectedDate!.day}-${selectedDate!.month}-${selectedDate!.year}"),
+                        onTap: selectedNutritionist == null
+                            ? null
+                            : () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime.now()
+                                .add(const Duration(days: 30)),
+                          );
+                          if (picked != null) {
+                            setModal(() {
+                              selectedDate = picked;
+                              selectedTime = null;
+                            });
+                          }
+                        },
+                      ),
 
-                        Navigator.pop(context);
-                        setState(() {});
-                      }
-                          : null,
-                      child: const Text("Confirm"),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: slots.map((slot) {
+                          final isBooked =
+                              bookedSlots[selectedDate]
+                                  ?.contains("$selectedNutritionist-$slot") ??
+                                  false;
+
+                          return ChoiceChip(
+                            label: Text(slot),
+                            selected: selectedTime == slot,
+                            onSelected: isBooked
+                                ? null
+                                : (_) =>
+                                setModal(() => selectedTime = slot),
+                            backgroundColor:
+                            isBooked ? Colors.red.shade100 : null,
+                          );
+                        }).toList(),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // ✅ UNIVERSAL SAFE CONFIRM BUTTON
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            minimumSize:
+                            const Size(double.infinity, 48),
+                          ),
+                          onPressed: selectedNutritionist != null &&
+                              selectedDate != null &&
+                              selectedTime != null
+                              ? () {
+                            bookedSlots
+                                .putIfAbsent(selectedDate!, () => {});
+                            bookedSlots[selectedDate!]!.add(
+                                "$selectedNutritionist-$selectedTime");
+
+                            Navigator.pop(context);
+                            setState(() {});
+                          }
+                              : null,
+                          child: const Text("Confirm"),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
         );
       },
     );
