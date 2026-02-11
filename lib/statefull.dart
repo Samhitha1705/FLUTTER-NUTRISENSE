@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:my_app/customerReview.dart';
+import 'package:my_app/expandWidget.dart';
 
 import 'package:my_app/homePage.dart';
 import 'package:my_app/liveCoach.dart';
@@ -41,45 +42,49 @@ class _maniPageState extends State<maniPage> {
             onTap: () {
               showModalBottomSheet(
                 context: context,
+                backgroundColor: Colors.white,
                 builder: (cxt) {
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text("Filter Data"),
-                      const ListTile(
-                        leading: CircleAvatar(),
-                        title: Text("Filter by Names"),
-                      ),
-                      const ListTile(
-                        leading: CircleAvatar(),
-                        title: Text("Filter by Prices"),
-                      ),
-                      const ListTile(
-                        leading: CircleAvatar(),
-                        title: Text("Filter by Foods"),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text("Close It"),
-                      ),
-                    ],
+                  return Container(
+                    height: 300,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,            
+                      children: [
+                        const Text("Filter Data",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        const ListTile(
+                          leading: CircleAvatar(),
+                          title: Text("Filter by Names"),
+                        ),
+                        const ListTile(
+                          leading: CircleAvatar(),
+                          title: Text("Filter by Prices"),
+                        ),
+                        const ListTile(
+                          leading: CircleAvatar(),
+                          title: Text("Filter by Foods"),
+                        ),
+    
+                        ElevatedButton(onPressed: (){
+                          Navigator.pop(context);
+                        }, child: const Text("Close It",style: TextStyle(fontWeight: FontWeight.bold),))
+                      ],
+                    ),
                   );
                 },
               );
             },
             child: const Icon(Icons.filter_alt),
           ),
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(
-                  builder: (_) => MyApp(FirstName: ""),
-                ),
-                    (route) => false,
-              );
-            },
-            icon: const Icon(Icons.logout),
-          ),
+          // IconButton(
+          //   onPressed: () {
+          //     Navigator.of(context).pushAndRemoveUntil(
+          //       MaterialPageRoute(
+          //         builder: (_) => MyApp(FirstName: ""),
+          //       ),
+          //           (route) => false,
+          //     );
+          //   },
+          //   icon: const Icon(Icons.logout),
+          // ),
           IconButton(onPressed: (){
             // Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(
             //   builder: (context) => MyApp(FirstName: ""),
@@ -139,7 +144,9 @@ class _maniPageState extends State<maniPage> {
             Divider(),
             TextButton.icon(onPressed: (){}, icon:Icon(Icons.discount), label: Text("Discount")),
             Divider(),
-            TextButton.icon(onPressed: (){},icon:Icon(Icons.person), label: Text("Profile")),
+            TextButton.icon(onPressed: (){
+              Navigator.of(context).push(MaterialPageRoute(builder: (cxt)=> expandFlex()));
+            },icon:Icon(Icons.person), label: Text("Profile")),
             Divider(),
             TextButton.icon(onPressed: (){},icon:Icon(Icons.explore), label: Text("About Us")),
             Divider(),

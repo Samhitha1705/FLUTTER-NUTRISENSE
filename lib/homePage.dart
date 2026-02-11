@@ -89,7 +89,7 @@ class _homePageScreenState extends State<homePageScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "${getGreeting()} 👋",
+            "${getGreeting()} ",
             style: const TextStyle(color: Colors.white70, fontSize: 16),
           ),
           const SizedBox(height: 8),
