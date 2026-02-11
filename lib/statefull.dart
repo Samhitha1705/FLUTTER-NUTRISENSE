@@ -21,7 +21,6 @@ class maniPage extends StatefulWidget {
 class _maniPageState extends State<maniPage> {
   int currentIndex = 0;
 
-  /// 🔴 ONLY CHANGE IS HERE → HomePageScreen()
   final List<Widget> dashboardScreens = [
     homePageScreen(),
     Totalfooditems(),
