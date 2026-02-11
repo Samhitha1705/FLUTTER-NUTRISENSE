@@ -25,6 +25,8 @@ class Totalfooditems extends StatelessWidget {
     "Organic Salmon with Organic Quinoa & Steamed Greens"
   ];
 
+  int itemCost = 100;
+
   Totalfooditems({super.key});
 
   @override
@@ -58,7 +60,7 @@ class Totalfooditems extends StatelessWidget {
                     onTap: () {
                       Navigator.push(context, MaterialPageRoute(builder: (cxt)=> Aboutfood(image: listBreakfastItems[index],
                       title: "About these Food",
-                      Description: "Cost £2",)));
+                      Description: "Cost $itemCost")));
                     },
                     title: Card(child: SingleChildScrollView(
                       child: Column(
@@ -66,7 +68,7 @@ class Totalfooditems extends StatelessWidget {
                         children: [
                           CachedNetworkImage(imageUrl: listBreakfastItems[index]),
                           Text("item $index"),
-                          Text("Cost: £2"),
+                          Text("Cost: $itemCost"),
                         ],
                         
                       ),
@@ -86,7 +88,7 @@ class Totalfooditems extends StatelessWidget {
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (cxt)=> Aboutfood(image: listLaunchItems[index],
                         title: listLaunchItemsNames[index],
-                        Description: "Cost £2",)));
+                        Description: "Cost $itemCost",)));
                       },
                       title: Card(child: SingleChildScrollView(
                         child: Column(
@@ -94,7 +96,7 @@ class Totalfooditems extends StatelessWidget {
                           children: [
                             CachedNetworkImage(imageUrl: listLaunchItems[index]),
                             Text(listLaunchItemsNames[index]),
-                            Text("Cost: £2"),
+                            Text("Cost: $itemCost"),
                           ],
                           
                         ),
@@ -114,7 +116,7 @@ class Totalfooditems extends StatelessWidget {
                       onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (cxt)=> Aboutfood(image: listBreakfastItems[index],
                         title: "About these Food",
-                        Description: "Cost £2",)));
+                        Description: "Cost $itemCost",)));
                       },
                       title: Card(child: SingleChildScrollView(
                         child: Column(
@@ -122,7 +124,7 @@ class Totalfooditems extends StatelessWidget {
                           children: [
                             CachedNetworkImage(imageUrl: listBreakfastItems[index]),
                             Text("item $index"),
-                            Text("Cost: £2"),
+                            Text("Cost: $itemCost"),
                           ],
                           
                         ),

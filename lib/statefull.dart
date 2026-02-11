@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:my_app/customerReview.dart';
+import 'package:my_app/expandWidget.dart';
 
 import 'package:my_app/homePage.dart';
 import 'package:my_app/liveCoach.dart';
@@ -40,69 +41,71 @@ class _maniPageState extends State<maniPage> {
             onTap: () {
               showModalBottomSheet(
                 context: context,
+                backgroundColor: Colors.white,
                 builder: (cxt) {
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text("Filter Data"),
-                      const ListTile(
-                        leading: CircleAvatar(),
-                        title: Text("Filter by Names"),
-                      ),
-                      const ListTile(
-                        leading: CircleAvatar(),
-                        title: Text("Filter by Prices"),
-                      ),
-                      const ListTile(
-                        leading: CircleAvatar(),
-                        title: Text("Filter by Foods"),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text("Close It"),
-                      ),
-                    ],
+                  return Container(
+                    height: 300,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,            
+                      children: [
+                        const Text("Filter Data",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        const ListTile(
+                          leading: CircleAvatar(),
+                          title: Text("Filter by Names"),
+                        ),
+                        const ListTile(
+                          leading: CircleAvatar(),
+                          title: Text("Filter by Prices"),
+                        ),
+                        const ListTile(
+                          leading: CircleAvatar(),
+                          title: Text("Filter by Foods"),
+                        ),
+    
+                        ElevatedButton(onPressed: (){
+                          Navigator.pop(context);
+                        }, child: const Text("Close It",style: TextStyle(fontWeight: FontWeight.bold),))
+                      ],
+                    ),
                   );
                 },
               );
             },
             child: const Icon(Icons.filter_alt),
           ),
-          IconButton(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (cxt) {
+          // IconButton(
+          //   onPressed: () {
+          //     Navigator.of(context).pushAndRemoveUntil(
+          //       MaterialPageRoute(
+          //         builder: (_) => MyApp(FirstName: ""),
+          //       ),
+          //           (route) => false,
+          //     );
+          //   },
+          //   icon: const Icon(Icons.logout),
+          // ),
+          IconButton(onPressed: (){
+            // Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(
+            //   builder: (context) => MyApp(FirstName: ""),
+            // ), (route)=> false);
+            showDialog(context: context, builder: (cxt){
                   return AlertDialog(
-                    title: const Text("Logout"),
-                    content: const Text("Do you really want to Logout?"),
+                    title: Text("Logout"),
+                    content: Text("Do you really want to Logout?"),
                     actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text("No"),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                              builder: (cxt) => MyApp(FirstName: ''),
-                            ),
-                                (route) => false,
-                          );
-                        },
-                        child: const Text("Yes"),
-                      ),
+                      TextButton(onPressed: (){
+                        Navigator.pop(context);
+                      }, child: Text("No")),
+                      TextButton(onPressed: (){
+                        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (cxt)=> MyApp(FirstName: '')), (route)=> false);
+                      }, child: Text("Yes"))
                     ],
                   );
-                },
-              );
-            },
-            icon: const Icon(Icons.logout),
-          ),
+            });
+          }, icon: Icon(Icons.logout))
         ],
       ),
 
-      /// 🧭 DRAWER
       drawer: Drawer(
         backgroundColor: Colors.white,
         child: Column(
@@ -127,83 +130,29 @@ class _maniPageState extends State<maniPage> {
                 ),
               ),
             ),
-
-            TextButton.icon(
-              onPressed: () {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(
-                    builder: (cxt) => maniPage(phone: ''),
-                  ),
-                      (route) => false,
-                );
-              },
-              icon: const Icon(Icons.home),
-              label: const Text("Home"),
-            ),
-
-            const Divider(),
-
-            /// ✅ FIXED REVIEWS NAVIGATION
-            TextButton.icon(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (cxt) => const ReviewsPage(),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.rate_review_sharp),
-              label: const Text("Reviews"),
-            ),
-
-            const Divider(),
-
-            TextButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.room_service_outlined),
-              label: const Text("My Orders"),
-            ),
-
-            const Divider(),
-
-            TextButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.discount),
-              label: const Text("Discount"),
-            ),
-
-            const Divider(),
-
-            TextButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.person),
-              label: const Text("Profile"),
-            ),
-
-            const Divider(),
-
-            TextButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.explore),
-              label: const Text("About Us"),
-            ),
-
-            const Divider(),
-
-            TextButton.icon(
-              onPressed: () {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(
-                    builder: (cxt) => MyApp(FirstName: ''),
-                  ),
-                      (route) => false,
-                );
-              },
-              icon: const Icon(Icons.logout),
-              label: const Text("Logout"),
-            ),
-
-            const Divider(),
+            // TextButton.(onPressed: (){}, child: Text("Home")),
+            TextButton.icon(onPressed: (){
+              Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (cxt)=>maniPage(phone: '',)), (route)=>false);
+            },icon: Icon(Icons.home), label: Text("Home")),
+            Divider(),
+            TextButton.icon(onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (cxt)=> reviewsPage()));
+            }, icon:Icon(Icons.rate_review_sharp), label: Text("Reviews")),
+            Divider(),
+            TextButton.icon(onPressed: (){}, icon:Icon(Icons.room_service_outlined), label: Text("My Orders")),
+            Divider(),
+            TextButton.icon(onPressed: (){}, icon:Icon(Icons.discount), label: Text("Discount")),
+            Divider(),
+            TextButton.icon(onPressed: (){
+              Navigator.of(context).push(MaterialPageRoute(builder: (cxt)=> expandFlex()));
+            },icon:Icon(Icons.person), label: Text("Profile")),
+            Divider(),
+            TextButton.icon(onPressed: (){},icon:Icon(Icons.explore), label: Text("About Us")),
+            Divider(),
+            TextButton.icon(onPressed: (){
+              Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (cxt)=> MyApp(FirstName: '')),(route)=>false);
+            },icon:Icon(Icons.logout), label: Text("Logout")),
+            Divider()
           ],
         ),
       ),
