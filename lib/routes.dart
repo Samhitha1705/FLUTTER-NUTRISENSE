@@ -1,17 +1,44 @@
 import 'package:flutter/material.dart';
-import 'package:my_app/main.dart';
-import 'package:my_app/registrationPage.dart';
-import 'package:my_app/splashscreen.dart';
-import 'package:my_app/statefull.dart';
+import 'aboutFood.dart';
+import 'payment_gateway.dart';
+import 'my_orders.dart';
 
-var onGenerateRoute = (RouteSettings settings){
-  if(settings.name == "/"){
-    return MaterialPageRoute(builder: (builder)=> MyApp(FirstName: ""));
-  }else if(settings.name == "/dasboard"){
-    return MaterialPageRoute(builder: (builder)=> maniPage(phone: ""));
-  }else if(settings.name == "/LoginScreen"){
-    return MaterialPageRoute(builder:(builder)=> MyApp(FirstName: ""));
-  }else{
-    return MaterialPageRoute(builder: (builder)=> Registrationpage());
+Route<dynamic> onGenerateRoute(RouteSettings settings) {
+  switch (settings.name) {
+
+    case "/aboutFood":
+      final args = settings.arguments as Map<String, dynamic>;
+      return MaterialPageRoute(
+        builder: (_) => Aboutfood(
+          title: args["title"],
+          image: args["image"],
+          description: args["description"],
+          price: args["price"],
+          category: args["category"],
+        ),
+      );
+
+    case "/payment":
+      final args = settings.arguments as Map<String, dynamic>;
+      return MaterialPageRoute(
+        builder: (_) => PaymentGateway(
+          title: args["title"],
+          image: args["image"],
+          orderItemCost: args["price"],
+          category: args["category"],
+        ),
+      );
+
+    case "/orders":
+      return MaterialPageRoute(
+        builder: (_) => const MyOrdersPage(),
+      );
+
+    default:
+      return MaterialPageRoute(
+        builder: (_) => const Scaffold(
+          body: Center(child: Text("Route not found")),
+        ),
+      );
   }
-};
+}

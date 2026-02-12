@@ -8,17 +8,18 @@ import 'package:my_app/main.dart';
 import 'package:my_app/mealsScreen.dart';
 import 'package:my_app/personSuggest.dart';
 import 'package:my_app/totalFoodItems.dart';
+import 'package:my_app/my_orders.dart'; // ✅ ADDED
 
-class maniPage extends StatefulWidget {
+class teamPage extends StatefulWidget {
   final String phone;
 
-  const maniPage({super.key, required this.phone});
+  const teamPage({super.key, required this.phone});
 
   @override
-  State<maniPage> createState() => _maniPageState();
+  State<teamPage> createState() => _teamPageState();
 }
 
-class _maniPageState extends State<maniPage> {
+class _teamPageState extends State<teamPage> {
   int currentIndex = 0;
 
   final List<Widget> dashboardScreens = [
@@ -38,7 +39,6 @@ class _maniPageState extends State<maniPage> {
         actions: [
           const Icon(Icons.search_outlined, color: Colors.white),
 
-          /// 🔽 FILTER ICON
           InkWell(
             onTap: () {
               showModalBottomSheet(
@@ -90,7 +90,6 @@ class _maniPageState extends State<maniPage> {
             ),
           ),
 
-          /// 🔐 LOGOUT ICON
           IconButton(
               onPressed: () {
                 showDialog(
@@ -124,7 +123,6 @@ class _maniPageState extends State<maniPage> {
         ],
       ),
 
-      /// 📂 DRAWER
       drawer: Drawer(
         backgroundColor: Colors.white,
         child: Column(
@@ -139,7 +137,7 @@ class _maniPageState extends State<maniPage> {
                 child: Center(
                   child: Stack(
                     children: const [
-                      CircleAvatar(radius: 45, child: Text("MC")),
+                      CircleAvatar(radius: 45, child: Text("Team")),
                       Positioned(
                         bottom: 4,
                         right: 0,
@@ -151,20 +149,20 @@ class _maniPageState extends State<maniPage> {
               ),
             ),
 
-            /// 🏠 HOME
+            /// HOME
             TextButton.icon(
                 onPressed: () {
                   Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(
                           builder: (cxt) =>
-                              maniPage(phone: widget.phone)),
+                              teamPage(phone: widget.phone)),
                           (route) => false);
                 },
                 icon: const Icon(Icons.home),
                 label: const Text("Home")),
             const Divider(),
 
-            /// ⭐ REVIEWS (FIXED HERE)
+            /// REVIEWS
             TextButton.icon(
                 onPressed: () {
                   Navigator.of(context).push(
@@ -177,8 +175,16 @@ class _maniPageState extends State<maniPage> {
                 label: const Text("Reviews")),
             const Divider(),
 
+            /// ✅ MY ORDERS (FIXED)
             TextButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (cxt) =>
+                      const MyOrdersPage(),
+                    ),
+                  );
+                },
                 icon: const Icon(Icons.room_service_outlined),
                 label: const Text("My Orders")),
             const Divider(),
@@ -222,7 +228,6 @@ class _maniPageState extends State<maniPage> {
         ),
       ),
 
-      /// 🔽 BOTTOM NAVIGATION
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.red,
         selectedItemColor: Colors.blue,

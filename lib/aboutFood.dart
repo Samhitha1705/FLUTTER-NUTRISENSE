@@ -1,26 +1,57 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:my_app/payment_gateway.dart';
+import 'payment_gateway.dart';
 
 class Aboutfood extends StatelessWidget {
-  final String image, title, Description;
-  const Aboutfood({super.key, this.title="", this.image="", this.Description=""});
+  final String image;
+  final String title;
+  final String description;
+  final String price;
+  final String category;
+
+  const Aboutfood({
+    super.key,
+    required this.title,
+    required this.image,
+    required this.description,
+    required this.price,
+    required this.category,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title), 
-      ),
+      appBar: AppBar(title: Text(title)),
       body: Column(
         children: [
-          Card(child: CachedNetworkImage(imageUrl: image, height: 250, width:double.infinity,)),
-          Text(title,style: TextStyle(fontSize: 30)),
-          Text(Description),
-          TextButton.icon(onPressed: (){
-            Navigator.of(context).push(MaterialPageRoute(builder: (cxt)=> razorPay(orderItemCost:Description)));
-          }, icon:Icon(Icons.arrow_circle_right_outlined),label: Text("Order Now")),
-          TextButton.icon(onPressed: (){}, icon: Icon(Icons.add_shopping_cart_outlined), label: Text("Add to Cart Now"))
+          CachedNetworkImage(
+            imageUrl: image,
+            height: 250,
+            width: double.infinity,
+            fit: BoxFit.cover,
+          ),
+          const SizedBox(height: 10),
+          Text(title, style: const TextStyle(fontSize: 24)),
+          const SizedBox(height: 10),
+          Text(description),
+          const SizedBox(height: 20),
+
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PaymentGateway(
+                    title: title,
+                    image: image,
+                    orderItemCost: price,
+                    category: category,
+                  ),
+                ),
+              );
+            },
+            child: const Text("Order Now"),
+          )
         ],
       ),
     );

@@ -5,51 +5,58 @@ import 'package:my_app/aboutFood.dart';
 class Mealsscreen extends StatelessWidget {
   Mealsscreen({super.key});
 
-  List<String> FoodItemList = [
-    "spinach",
+  List<String> foodItemList = [
+    "Spinach",
     "Swiss chard",
-    "bok choy",
-    "arugula",
-    "cabbage",
-    "watercress",
+    "Bok choy",
+    "Arugula",
+    "Cabbage",
+    "Watercress",
   ];
+
+  final String imageUrl =
+      "https://cdn.britannica.com/95/223595-004-36F9B6AF.jpg";
+
+  final int itemCost = 150;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Meals"),
-        automaticallyImplyLeading: false, // ✅ removes the back button
+        automaticallyImplyLeading: false,
       ),
-
       body: ListView.builder(
-        itemCount: FoodItemList.length,
+        itemCount: foodItemList.length,
         itemBuilder: (context, index) {
           return Card(
+            margin: const EdgeInsets.all(8),
             child: ListTile(
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (cxt) => Aboutfood(
-                      title: FoodItemList[index],
-                      Description: "NA",
-                      image:
-                      "https://cdn.britannica.com/95/223595-004-36F9B6AF.jpg",
+                    builder: (_) => Aboutfood(
+                      title: foodItemList[index],
+                      image: imageUrl,
+                      description:
+                      "${foodItemList[index]} is a healthy green vegetable rich in vitamins and minerals.",
+                      price: itemCost.toString(),
+                      category: "Meals", // 🔥 IMPORTANT
                     ),
                   ),
                 );
               },
               leading: CachedNetworkImage(
-                imageUrl:
-                "https://media.istockphoto.com/id/1006196472/photo/bunch-of-spinach-leaves-on-isolated-white-background.jpg?s=612x612&w=0&k=20&c=OAIswtUC1aMNDwtMEFIaZv6fSIftsoAV-cgJZSGLJ7A=",
+                imageUrl: imageUrl,
+                width: 60,
+                fit: BoxFit.cover,
               ),
-              title: Text(FoodItemList[index]),
+              title: Text(foodItemList[index]),
               subtitle: const Text(
-                "Spinach is a nutrient-dense superfood packed with vitamins A, C, and K, along with iron, folate, potassium, and magnesium, boasting only 7 calories per raw cup",
-                textAlign: TextAlign.center,
+                "A nutrient-dense meal option packed with essential vitamins and minerals.",
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                maxLines: 3,
               ),
               trailing: const Icon(Icons.payment),
             ),

@@ -1,70 +1,104 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'order_storage.dart';
+import 'order_model.dart';
+import 'my_orders.dart';
 
-class razorPay extends StatefulWidget {
+class PaymentGateway extends StatefulWidget {
+  final String title;
+  final String image;
   final String orderItemCost;
+  final String category;
 
-  const razorPay({super.key, this.orderItemCost=""});
-  
+  const PaymentGateway({
+    super.key,
+    required this.title,
+    required this.image,
+    required this.orderItemCost,
+    required this.category,
+  });
+
   @override
-  State<razorPay> createState() => _razorPayState();
+  State<PaymentGateway> createState() => _PaymentGatewayState();
 }
 
-class _razorPayState extends State<razorPay> {
-
-  var _razorpay = Razorpay();
-  
-  Map<String ,dynamic> options ={};
+class _PaymentGatewayState extends State<PaymentGateway> {
+  late Razorpay _razorpay;
 
   @override
-    void initState() {
-      super.initState();
-      options = {
-        'key': 'rzp_test_RTzZoniisim7KO',
-        'amount':"mai",
-        'name': 'MTL Corporation.',
-        'description': 'Nutrion Organic Foods',
-        'prefill': {
-          'contact': '9959214209',
-          'email': 'test@gmail.com'
-        }
-      };
-      _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-      _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
-      _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
-    }    
+  void initState() {
+    super.initState();
+    _razorpay = Razorpay();
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-     appBar: AppBar(
-      title: Text("Payment Details"),
-     ),
-     body: Column(children: [
-        ElevatedButton(onPressed: (){
-          _razorpay.open(options);
-          print("hello");
-        }, child: Text("Complete Payment"))
-     ],),
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handleSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handleError);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      openCheckout();
+    });
+  }
+
+  void openCheckout() {
+    int amount = int.tryParse(widget.orderItemCost) ?? 100;
+
+    var options = {
+      'key': 'rzp_test_RTzZoniisim7KO',
+      'amount': amount * 100,
+      'name': widget.title,
+      'description': 'Food Order',
+    };
+
+    _razorpay.open(options);
+  }
+
+  void _handleSuccess(PaymentSuccessResponse response) {
+    globalOrders.insert(
+      0,
+      OrderModel(
+        title: widget.title,
+        image: widget.image,
+        price: double.parse(widget.orderItemCost),
+        category: widget.category,
+        time: DateTime.now(),
+        status: "Success",
+      ),
+    );
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const MyOrdersPage()),
     );
   }
 
-  void _handlePaymentSuccess(PaymentSuccessResponse response) {
-  // Do something when payment succeeds
-    print("_handlePaymentSuccess");
-    Fluttertoast.showToast(msg: "__handlePaymentSuccess");
+  void _handleError(PaymentFailureResponse response) {
+    globalOrders.insert(
+      0,
+      OrderModel(
+        title: widget.title,
+        image: widget.image,
+        price: double.parse(widget.orderItemCost),
+        category: widget.category,
+        time: DateTime.now(),
+        status: "Failed",
+      ),
+    );
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const MyOrdersPage()),
+    );
   }
 
-  void _handlePaymentError(PaymentFailureResponse response) {
-    // Do something when payment fails
-    print("_handlePaymentError");
-    Fluttertoast.showToast(msg: "_handlePaymentError");
+  @override
+  void dispose() {
+    _razorpay.clear();
+    super.dispose();
   }
 
-  void _handleExternalWallet(ExternalWalletResponse response) {
-    // Do something when an external wallet was selected
-    print("_handleExternalWallet");
-    Fluttertoast.showToast(msg:"_handleExternalWallet");
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(child: CircularProgressIndicator()),
+    );
   }
 }

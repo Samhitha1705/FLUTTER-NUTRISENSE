@@ -116,7 +116,7 @@ class MyApp extends StatelessWidget {
             ),
             ElevatedButton(onPressed: (){
               Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(
-                builder: (context) => maniPage(phone: FirstName),
+                builder: (context) => teamPage(phone: FirstName),
               ), (route)=> false);
               // Navigator.of(context).push(MaterialPageRoute(builder: (cxt)=> maniPage(
               //   phone: FirstName,
