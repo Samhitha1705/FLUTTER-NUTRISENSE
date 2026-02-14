@@ -1,269 +1,168 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:my_app/customerReview.dart';
-import 'package:my_app/expandWidget.dart';
-import 'package:my_app/homePage.dart';
-import 'package:my_app/liveCoach.dart';
-import 'package:my_app/main.dart';
-import 'package:my_app/mealsScreen.dart';
-import 'package:my_app/personSuggest.dart';
-import 'package:my_app/totalFoodItems.dart';
-import 'package:my_app/my_orders.dart'; // ✅ ADDED
+import 'package:shared_preferences/shared_preferences.dart';
 
-class teamPage extends StatefulWidget {
-  final String phone;
+import 'homePage.dart';
+import 'totalFoodItems.dart';
+import 'mealsScreen.dart';
+import 'liveCoach.dart';
+import 'expandWidget.dart';
+import 'my_orders.dart';
+import 'main.dart';
+import 'address_book_page.dart';
 
-  const teamPage({super.key, required this.phone});
+class StatefulDashboard extends StatefulWidget {
+  const StatefulDashboard({super.key});
 
   @override
-  State<teamPage> createState() => _teamPageState();
+  State<StatefulDashboard> createState() => _StatefulDashboardState();
 }
 
-class _teamPageState extends State<teamPage> {
-  int currentIndex = 0;
+class _StatefulDashboardState extends State<StatefulDashboard> {
+  int _currentIndex = 0;
 
   final List<Widget> dashboardScreens = [
     homePageScreen(),
     Totalfooditems(),
     Mealsscreen(),
     liveCoachScreen(),
-    Personsuggest(),
   ];
+
+  String userName = "User Name";
+  String? userImage;
+
+  @override
+  void initState() {
+    super.initState();
+    loadDrawerProfile();
+  }
+
+  // Load profile info (name + image)
+  Future loadDrawerProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userName = prefs.getString("name") ?? "User Name";
+      userImage = prefs.getString("imagePath");
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue,
-        title: const Text("Dashboard Page"),
-        actions: [
-          const Icon(Icons.search_outlined, color: Colors.white),
-
-          InkWell(
-            onTap: () {
-              showModalBottomSheet(
-                context: context,
-                backgroundColor: Colors.white,
-                builder: (cxt) {
-                  return SizedBox(
-                    height: 300,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const SizedBox(height: 10),
-                        const Text(
-                          "Filter Data",
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                        const ListTile(
-                          leading: CircleAvatar(),
-                          title: Text("Filter by Names"),
-                        ),
-                        const ListTile(
-                          leading: CircleAvatar(),
-                          title: Text("Filter by Prices"),
-                        ),
-                        const ListTile(
-                          leading: CircleAvatar(),
-                          title: Text("Filter by Foods"),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          child: const Text(
-                            "Close It",
-                            style:
-                            TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        )
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10),
-              child: Icon(Icons.filter_alt),
-            ),
-          ),
-
-          IconButton(
-              onPressed: () {
-                showDialog(
-                    context: context,
-                    builder: (cxt) {
-                      return AlertDialog(
-                        title: const Text("Logout"),
-                        content: const Text(
-                            "Do you really want to Logout?"),
-                        actions: [
-                          TextButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              child: const Text("No")),
-                          TextButton(
-                              onPressed: () {
-                                Navigator.of(context)
-                                    .pushAndRemoveUntil(
-                                    MaterialPageRoute(
-                                        builder: (cxt) =>
-                                            MyApp(FirstName: '')),
-                                        (route) => false);
-                              },
-                              child: const Text("Yes"))
-                        ],
-                      );
-                    });
-              },
-              icon: const Icon(Icons.logout))
-        ],
+        title: const Text("NutriSense"),
+        backgroundColor: Colors.green,
       ),
 
+      // ---------------- DRAWER ----------------
       drawer: Drawer(
-        backgroundColor: Colors.white,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: double.infinity,
-              height: 220,
-              child: DrawerHeader(
-                decoration:
-                const BoxDecoration(color: Colors.green),
-                child: Center(
-                  child: Stack(
-                    children: const [
-                      CircleAvatar(radius: 45, child: Text("Team")),
-                      Positioned(
-                        bottom: 4,
-                        right: 0,
-                        child: Icon(Icons.camera_alt),
-                      ),
-                    ],
-                  ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+
+              // 👤 PROFILE IMAGE + NAME
+              GestureDetector(
+                onTap: () async {
+                  bool? updated = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ExpandWidget()),
+                  );
+                  // Reload profile after returning
+                  if (updated == true) loadDrawerProfile();
+                },
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: Colors.green,
+                      backgroundImage: userImage != null
+                          ? FileImage(File(userImage!))
+                          : null,
+                      child: userImage == null
+                          ? const Icon(Icons.person, size: 40, color: Colors.white)
+                          : null,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      userName,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 5),
+                    const Text(
+                      "View Profile",
+                      style: TextStyle(color: Colors.blue),
+                    ),
+                  ],
                 ),
               ),
-            ),
 
-            /// HOME
-            TextButton.icon(
-                onPressed: () {
-                  Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                          builder: (cxt) =>
-                              teamPage(phone: widget.phone)),
-                          (route) => false);
-                },
-                icon: const Icon(Icons.home),
-                label: const Text("Home")),
-            const Divider(),
+              const Divider(),
 
-            /// REVIEWS
-            TextButton.icon(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                        builder: (cxt) =>
-                        const ReviewsPage()),
+              // 🛒 Your Orders
+              ListTile(
+                leading: const Icon(Icons.shopping_bag_outlined),
+                title: const Text("Your Orders"),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MyOrdersPage()),
                   );
                 },
-                icon: const Icon(Icons.rate_review_sharp),
-                label: const Text("Reviews")),
-            const Divider(),
+              ),
 
-            /// ✅ MY ORDERS (FIXED)
-            TextButton.icon(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (cxt) =>
-                      const MyOrdersPage(),
-                    ),
+              // 📍 Address Book
+              ListTile(
+                leading: const Icon(Icons.location_on_outlined),
+                title: const Text("Address Book"),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AddressBookPage()),
                   );
                 },
-                icon: const Icon(Icons.room_service_outlined),
-                label: const Text("My Orders")),
-            const Divider(),
+              ),
 
-            TextButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.discount),
-                label: const Text("Discount")),
-            const Divider(),
-
-            TextButton.icon(
-                onPressed: () {
-                  Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (cxt) =>
-                              expandFlex()));
+              // 🚪 Logout
+              ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text("Logout"),
+                onTap: () {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginPage()),
+                        (route) => false,
+                  );
                 },
-                icon: const Icon(Icons.person),
-                label: const Text("Profile")),
-            const Divider(),
-
-            TextButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.explore),
-                label: const Text("About Us")),
-            const Divider(),
-
-            TextButton.icon(
-                onPressed: () {
-                  Navigator.of(context)
-                      .pushAndRemoveUntil(
-                      MaterialPageRoute(
-                          builder: (cxt) =>
-                              MyApp(FirstName: '')),
-                          (route) => false);
-                },
-                icon: const Icon(Icons.logout),
-                label: const Text("Logout")),
-            const Divider()
-          ],
+              ),
+            ],
+          ),
         ),
       ),
 
+      // ---------------- BODY ----------------
+      body: SafeArea(
+        child: dashboardScreens[_currentIndex],
+      ),
+
+      // ---------------- BOTTOM NAVIGATION ----------------
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.red,
-        selectedItemColor: Colors.blue,
-        selectedFontSize: 18,
+        currentIndex: _currentIndex,
+        selectedItemColor: Colors.green,
         unselectedItemColor: Colors.grey,
-        currentIndex: currentIndex,
+        type: BottomNavigationBarType.fixed,
         onTap: (index) {
           setState(() {
-            currentIndex = index;
+            _currentIndex = index;
           });
         },
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.food_bank),
-            label: "Foods",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.room_service_outlined),
-            label: "Meals",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.live_help_outlined),
-            label: "Live Coach",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline_outlined),
-            label: "You",
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.food_bank), label: "Foods"),
+          BottomNavigationBarItem(icon: Icon(Icons.restaurant_menu), label: "Meals"),
+          BottomNavigationBarItem(icon: Icon(Icons.support_agent), label: "Live Coach"),
         ],
       ),
-
-      body: dashboardScreens[currentIndex],
     );
   }
 }
