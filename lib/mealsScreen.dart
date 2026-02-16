@@ -5,7 +5,7 @@ import 'package:my_app/aboutFood.dart';
 class Mealsscreen extends StatelessWidget {
   Mealsscreen({super.key});
 
-  List<String> foodItemList = [
+  final List<String> foodItemList = [
     "Spinach",
     "Swiss chard",
     "Bok choy",
@@ -30,8 +30,14 @@ class Mealsscreen extends StatelessWidget {
         itemCount: foodItemList.length,
         itemBuilder: (context, index) {
           return Card(
-            margin: const EdgeInsets.all(8),
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: ListTile(
+              contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               onTap: () {
                 Navigator.push(
                   context,
@@ -42,23 +48,48 @@ class Mealsscreen extends StatelessWidget {
                       description:
                       "${foodItemList[index]} is a healthy green vegetable rich in vitamins and minerals.",
                       price: itemCost.toString(),
-                      category: "Meals", // 🔥 IMPORTANT
+                      category: "Meals",
                     ),
                   ),
                 );
               },
-              leading: CachedNetworkImage(
-                imageUrl: imageUrl,
-                width: 60,
-                fit: BoxFit.cover,
+              leading: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.cover,
+                ),
               ),
-              title: Text(foodItemList[index]),
+              title: Text(
+                foodItemList[index],
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
               subtitle: const Text(
                 "A nutrient-dense meal option packed with essential vitamins and minerals.",
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              trailing: const Icon(Icons.payment),
+
+              // ✅ ZOMATO STYLE PRICE
+              trailing: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    "₹$itemCost",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black, // ✅ BLACK PRICE
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },
