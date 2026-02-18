@@ -1,137 +1,153 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'review_provider.dart';
+import 'review_model.dart';
 
-class ReviewsPage extends StatefulWidget {
+class ReviewsPage extends StatelessWidget {
   const ReviewsPage({super.key});
-
-  @override
-  State<ReviewsPage> createState() => _ReviewsPageState();
-}
-
-class _ReviewsPageState extends State<ReviewsPage> {
-  final PageController _pageController = PageController();
-  int _currentPage = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFECE6),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        backgroundColor: Colors.orange,
+        title: const Text("Reviews"),
+        centerTitle: true,
       ),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            /// 🥗 TOP LEFT FOOD IMAGE
-            Positioned(
-              top: -10,
-              left: -20,
-              child: Image.asset(
-                'assets/images/healthy_food_1.png',
-                height: 160,
-              ),
-            ),
 
-            /// 🍓 BOTTOM RIGHT FOOD IMAGE
-            Positioned(
-              bottom: -20,
-              right: -20,
-              child: Image.asset(
-                'assets/images/healthy_food_2.png',
-                height: 160,
-              ),
-            ),
+      /// ➕ ADD REVIEW BUTTON
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.orange,
+        child: const Icon(Icons.add),
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) {
+              final TextEditingController reviewController =
+              TextEditingController();
+              int selectedRating = 5;
 
-            /// MAIN CONTENT
-            Column(
-              children: [
-                const SizedBox(height: 40),
+              return AlertDialog(
+                title: const Text("Add Review"),
+                content: StatefulBuilder(
+                  builder: (context, setState) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          controller: reviewController,
+                          maxLines: 3,
+                          decoration: const InputDecoration(
+                            hintText: "Enter your review",
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 15),
 
-                /// 🔍 TITLE CHIP (RIGHT SIDE)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 24),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 18, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Text(
-                            "What they say about us",
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
+                        /// ⭐ Rating Selector
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            5,
+                                (index) => IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  selectedRating = index + 1;
+                                });
+                              },
+                              icon: Icon(
+                                index < selectedRating
+                                    ? Icons.star
+                                    : Icons.star_border,
+                                color: Colors.amber,
+                              ),
                             ),
                           ),
-                          SizedBox(width: 6),
-                          Icon(Icons.search, size: 18),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 40),
-
-                /// 🔁 REVIEWS (PAGE VIEW)
-                Expanded(
-                  child: PageView(
-                    controller: _pageController,
-                    onPageChanged: (index) {
-                      setState(() {
-                        _currentPage = index;
-                      });
-                    },
-                    children: const [
-                      ReviewsPageSet(reviews: [
-                        "Absolutely loved the healthy meals! Fresh, tasty and perfectly balanced.",
-                        "The meal plans helped me stay consistent and healthy.",
-                        "Customer support and quality are top-notch!",
-                      ]),
-                      ReviewsPageSet(reviews: [
-                        "Feels like homemade food with nutrition care.",
-                        "Perfect app for fitness-focused people.",
-                        "Diet plans are easy to follow and effective.",
-                      ]),
-                      ReviewsPageSet(reviews: [
-                        "Great UI and very smooth experience.",
-                        "Live coach feature is a game changer!",
-                        "Highly recommend for daily wellness.",
-                      ]),
-                    ],
-                  ),
-                ),
-
-                /// 🔵 PAGE INDICATOR DOTS
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 18),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      3,
-                          (index) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.symmetric(horizontal: 5),
-                        width: _currentPage == index ? 14 : 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: _currentPage == index
-                              ? Colors.orange
-                              : Colors.orange.withOpacity(0.4),
-                          borderRadius: BorderRadius.circular(10),
                         ),
-                      ),
-                    ),
-                  ),
+                      ],
+                    );
+                  },
                 ),
-              ],
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Cancel"),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                    ),
+                    onPressed: () {
+                      if (reviewController.text.trim().isNotEmpty) {
+                        Provider.of<ReviewProvider>(context, listen: false)
+                            .addReview(
+                          ReviewModel(
+                            userName: "User",
+                            reviewText: reviewController.text.trim(),
+                            rating: selectedRating,
+                            date: DateTime.now(),
+                          ),
+                        );
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: const Text("Submit"),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      ),
+
+      body: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+
+            /// 🔹 TITLE
+            const Text(
+              "What they say about us",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            /// 🔹 REVIEWS LIST
+            Expanded(
+              child: Consumer<ReviewProvider>(
+                builder: (context, reviewProvider, child) {
+                  final reviews = reviewProvider.reviews;
+
+                  if (reviews.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        "No reviews yet",
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: reviews.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding:
+                        const EdgeInsets.only(bottom: 20),
+                        child: ReviewCard(
+                          review: reviews[index],
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -140,91 +156,70 @@ class _ReviewsPageState extends State<ReviewsPage> {
   }
 }
 
-/// 📄 SINGLE PAGE (3 REVIEWS)
-class ReviewsPageSet extends StatelessWidget {
-  final List<String> reviews;
-
-  const ReviewsPageSet({super.key, required this.reviews});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(24, 10, 24, 40),
-      itemCount: reviews.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 26),
-      itemBuilder: (context, index) {
-        return ReviewCard(review: reviews[index]);
-      },
-    );
-  }
-}
-
 /// 💬 REVIEW CARD
 class ReviewCard extends StatelessWidget {
-  final String review;
+  final ReviewModel review;
 
   const ReviewCard({super.key, required this.review});
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          padding: const EdgeInsets.fromLTRB(22, 34, 22, 26),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(22),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              )
-            ],
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
           ),
-          child: Column(
-            children: [
-              Text(
-                review,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 15,
-                  height: 1.6,
-                ),
-              ),
-              const SizedBox(height: 14),
-
-              /// ⭐ STARS
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  5,
-                      (index) => const Icon(
-                    Icons.star,
-                    color: Colors.amber,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        /// ❝ QUOTE ICON
-        Positioned(
-          top: -20,
-          left: 20,
-          child: Text(
-            "❝",
-            style: TextStyle(
-              fontSize: 46,
-              color: Colors.orange,
-              fontWeight: FontWeight.bold,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          /// REVIEW TEXT
+          Text(
+            review.reviewText,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 15,
+              height: 1.6,
             ),
           ),
-        ),
-      ],
+
+          const SizedBox(height: 12),
+
+          /// ⭐ DYNAMIC STARS
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              5,
+                  (index) => Icon(
+                index < review.rating
+                    ? Icons.star
+                    : Icons.star_border,
+                color: Colors.amber,
+                size: 20,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          /// USER NAME
+          Text(
+            "- ${review.userName}",
+            style: const TextStyle(
+              fontSize: 13,
+              fontStyle: FontStyle.italic,
+              color: Colors.grey,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
