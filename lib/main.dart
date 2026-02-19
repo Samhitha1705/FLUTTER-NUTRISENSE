@@ -4,13 +4,14 @@ import 'package:provider/provider.dart';
 
 import 'registrationPage.dart';
 import 'statefull.dart';
-import 'review_provider.dart';   // 👈 ADD THIS
+import 'review_provider.dart';
+import 'routes.dart';   // 👈 IMPORTANT
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ReviewProvider()), // 👈 ADD THIS
+        ChangeNotifierProvider(create: (_) => ReviewProvider()),
       ],
       child: const NutriApp(),
     ),
@@ -22,9 +23,10 @@ class NutriApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: SplashScreen(),
+      onGenerateRoute: onGenerateRoute,   // 👈 IMPORTANT
+      initialRoute: "/",                  // 👈 IMPORTANT
     );
   }
 }
@@ -68,6 +70,7 @@ class LoginPage extends StatelessWidget {
               fit: BoxFit.cover,
               height: 250,
             ),
+
             const SizedBox(height: 30),
 
             const Text("Enter Phone Number"),
@@ -104,13 +107,9 @@ class LoginPage extends StatelessWidget {
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pushAndRemoveUntil(
+                  Navigator.pushReplacementNamed(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                      const StatefulDashboard(),
-                    ),
-                        (route) => false,
+                    "/dashboard",   // 👈 IMPORTANT
                   );
                 },
                 child: const Text("Login"),
@@ -122,12 +121,9 @@ class LoginPage extends StatelessWidget {
             Center(
               child: TextButton(
                 onPressed: () {
-                  Navigator.push(
+                  Navigator.pushNamed(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                      const Registrationpage(),
-                    ),
+                    "/register",
                   );
                 },
                 child: const Text("Don't have an account? Register"),

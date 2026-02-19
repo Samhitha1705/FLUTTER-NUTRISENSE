@@ -1,8 +1,42 @@
 import 'package:flutter/material.dart';
 import 'order_storage.dart';
 
-class MyOrdersPage extends StatelessWidget {
+class MyOrdersPage extends StatefulWidget {
   const MyOrdersPage({super.key});
+
+  @override
+  State<MyOrdersPage> createState() => _MyOrdersPageState();
+}
+
+class _MyOrdersPageState extends State<MyOrdersPage> {
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 1));
+      if (mounted) setState(() {});
+      return true;
+    });
+  }
+
+  Color getStatusColor(String status) {
+    switch (status) {
+      case "Order Placed":
+        return Colors.orange;
+      case "Preparing":
+        return Colors.blue;
+      case "Out for Delivery":
+        return Colors.purple;
+      case "Delivered":
+        return Colors.green;
+      case "Payment Failed":
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,25 +51,41 @@ class MyOrdersPage extends StatelessWidget {
 
           return Card(
             margin: const EdgeInsets.all(10),
-            child: ListTile(
-              leading: Image.network(order.image, width: 60),
-              title: Text(order.title),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("₹${order.price}"),
-                  Text("Category: ${order.category}"),
-                  Text(
-                    "Date: ${order.time.day}-${order.time.month}-${order.time.year}",
+            child: InkWell(   // ✅ MAKES IT CLICKABLE
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  "/aboutFood",
+                  arguments: {
+                    "title": order.title,
+                    "image": order.image,
+                    "description":
+                    "This is your previously ordered item.",
+                    "price": order.price.toString(),
+                    "category": order.category,
+                  },
+                );
+              },
+              child: ListTile(
+                leading: Image.network(order.image, width: 60),
+                title: Text(order.title),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("₹${order.price}"),
+                    Text("Category: ${order.category}"),
+                    Text(
+                      "Date: ${order.time.day}-${order.time.month}-${order.time.year}",
+                    ),
+                  ],
+                ),
+                trailing: Text(
+                  order.status,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: getStatusColor(order.status),
                   ),
-                ],
-              ),
-              trailing: Text(
-                order.status,
-                style: TextStyle(
-                  color: order.status == "Success"
-                      ? Colors.green
-                      : Colors.red,
                 ),
               ),
             ),

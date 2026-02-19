@@ -52,17 +52,30 @@ class _PaymentGatewayState extends State<PaymentGateway> {
   }
 
   void _handleSuccess(PaymentSuccessResponse response) {
-    globalOrders.insert(
-      0,
-      OrderModel(
-        title: widget.title,
-        image: widget.image,
-        price: double.parse(widget.orderItemCost),
-        category: widget.category,
-        time: DateTime.now(),
-        status: "Success",
-      ),
+
+    OrderModel newOrder = OrderModel(
+      title: widget.title,
+      image: widget.image,
+      price: double.parse(widget.orderItemCost),
+      category: widget.category,
+      time: DateTime.now(),
+      status: "Order Placed",
     );
+
+    globalOrders.insert(0, newOrder);
+
+    /// 🔥 AUTO STATUS UPDATE LIKE ZOMATO
+    Future.delayed(const Duration(seconds: 5), () {
+      newOrder.status = "Preparing";
+    });
+
+    Future.delayed(const Duration(seconds: 10), () {
+      newOrder.status = "Out for Delivery";
+    });
+
+    Future.delayed(const Duration(seconds: 15), () {
+      newOrder.status = "Delivered";
+    });
 
     Navigator.pushReplacement(
       context,
@@ -71,6 +84,7 @@ class _PaymentGatewayState extends State<PaymentGateway> {
   }
 
   void _handleError(PaymentFailureResponse response) {
+
     globalOrders.insert(
       0,
       OrderModel(
@@ -79,7 +93,7 @@ class _PaymentGatewayState extends State<PaymentGateway> {
         price: double.parse(widget.orderItemCost),
         category: widget.category,
         time: DateTime.now(),
-        status: "Failed",
+        status: "Payment Failed",
       ),
     );
 

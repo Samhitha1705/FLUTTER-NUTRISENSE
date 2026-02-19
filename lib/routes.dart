@@ -2,9 +2,27 @@ import 'package:flutter/material.dart';
 import 'aboutFood.dart';
 import 'payment_gateway.dart';
 import 'my_orders.dart';
+import 'registrationPage.dart';
+import 'statefull.dart';
+import 'main.dart';
 
 Route<dynamic> onGenerateRoute(RouteSettings settings) {
   switch (settings.name) {
+
+    case "/":
+      return MaterialPageRoute(
+        builder: (_) => const SplashScreen(),
+      );
+
+    case "/dashboard":
+      return MaterialPageRoute(
+        builder: (_) => const StatefulDashboard(),
+      );
+
+    case "/register":
+      return MaterialPageRoute(
+        builder: (_) => const Registrationpage(),
+      );
 
     case "/aboutFood":
       final args = settings.arguments as Map<String, dynamic>;

@@ -29,17 +29,31 @@ class _CartPageState extends State<CartPage> {
     });
   }
 
+  /// ✅ UPDATED FUNCTION
   void decreaseQty(int index) {
-    if (globalCart[index].quantity > 1) {
-      setState(() {
+    setState(() {
+      if (globalCart[index].quantity > 1) {
         globalCart[index].quantity--;
-      });
-    }
+      } else {
+        // If quantity is 1 → remove item
+        globalCart.removeAt(index);
+
+        // If cart becomes empty → go back to previous screen
+        if (globalCart.isEmpty) {
+          Navigator.pop(context);
+        }
+      }
+    });
   }
 
   void removeItem(int index) {
     setState(() {
       globalCart.removeAt(index);
+
+      // If cart becomes empty after delete
+      if (globalCart.isEmpty) {
+        Navigator.pop(context);
+      }
     });
   }
 
@@ -105,7 +119,6 @@ class _CartPageState extends State<CartPage> {
                       style: const TextStyle(color: Colors.grey),
                     ),
 
-                    /// ✅ FIXED TRAILING (NO COLUMN)
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -184,7 +197,9 @@ class _CartPageState extends State<CartPage> {
                         MaterialPageRoute(
                           builder: (_) => PaymentGateway(
                             title: "Cart Order",
-                            image: globalCart.first.image,
+                            image: globalCart.isNotEmpty
+                                ? globalCart.first.image
+                                : "",
                             orderItemCost:
                             totalPrice.toString(),
                             category: "Cart",
