@@ -75,19 +75,39 @@ class _AddAddressFormState extends State<AddAddressForm> {
             const Text(
               "Add Address",
               style: TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.bold),
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 15),
 
-            TextField(controller: houseController, decoration: const InputDecoration(labelText: "House No")),
-            TextField(controller: areaController, decoration: const InputDecoration(labelText: "Area")),
-            TextField(controller: cityController, decoration: const InputDecoration(labelText: "City")),
-            TextField(controller: stateController, decoration: const InputDecoration(labelText: "State")),
-            TextField(controller: pincodeController, decoration: const InputDecoration(labelText: "Pincode")),
+            TextField(
+              controller: houseController,
+              decoration: const InputDecoration(labelText: "House No"),
+            ),
+            TextField(
+              controller: areaController,
+              decoration: const InputDecoration(labelText: "Area"),
+            ),
+            TextField(
+              controller: cityController,
+              decoration: const InputDecoration(labelText: "City"),
+            ),
+            TextField(
+              controller: stateController,
+              decoration: const InputDecoration(labelText: "State"),
+            ),
+            TextField(
+              controller: pincodeController,
+              decoration: const InputDecoration(labelText: "Pincode"),
+            ),
 
             const SizedBox(height: 10),
 
-            TextField(controller: receiverController, decoration: const InputDecoration(labelText: "Receiver Name")),
+            TextField(
+              controller: receiverController,
+              decoration: const InputDecoration(labelText: "Receiver Name"),
+            ),
 
             Row(
               children: [
@@ -121,7 +141,13 @@ class _AddAddressFormState extends State<AddAddressForm> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
               ),
-              child: const Text("Save Address"),
+              child: const Text(
+                "Save Address",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
 
             const SizedBox(height: 20),
