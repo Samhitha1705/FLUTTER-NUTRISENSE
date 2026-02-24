@@ -8,7 +8,7 @@ class PaymentGateway extends StatefulWidget {
   final String title;
   final String image;
   final String orderItemCost;
-  final String category;
+  final String category; // "Subscription" OR "Food"
 
   const PaymentGateway({
     super.key,
@@ -28,6 +28,7 @@ class _PaymentGatewayState extends State<PaymentGateway> {
   @override
   void initState() {
     super.initState();
+
     _razorpay = Razorpay();
 
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handleSuccess);
@@ -45,14 +46,25 @@ class _PaymentGatewayState extends State<PaymentGateway> {
       'key': 'rzp_test_RTzZoniisim7KO',
       'amount': amount * 100,
       'name': widget.title,
-      'description': 'Food Order',
+      'description': widget.category == "Subscription"
+          ? "Subscription Upgrade"
+          : "Food Order",
     };
 
     _razorpay.open(options);
   }
 
+  // ================= SUCCESS =================
+
   void _handleSuccess(PaymentSuccessResponse response) {
 
+    // 🔥 If Subscription → Return TRUE
+    if (widget.category == "Subscription") {
+      Navigator.pop(context, true);
+      return;
+    }
+
+    // 🔥 If Food Order → Normal Flow
     OrderModel newOrder = OrderModel(
       title: widget.title,
       image: widget.image,
@@ -64,7 +76,7 @@ class _PaymentGatewayState extends State<PaymentGateway> {
 
     globalOrders.insert(0, newOrder);
 
-    /// 🔥 AUTO STATUS UPDATE LIKE ZOMATO
+    // Auto status updates
     Future.delayed(const Duration(seconds: 5), () {
       newOrder.status = "Preparing";
     });
@@ -83,8 +95,17 @@ class _PaymentGatewayState extends State<PaymentGateway> {
     );
   }
 
+  // ================= ERROR =================
+
   void _handleError(PaymentFailureResponse response) {
 
+    // 🔥 If Subscription → Return FALSE
+    if (widget.category == "Subscription") {
+      Navigator.pop(context, false);
+      return;
+    }
+
+    // 🔥 If Food Order → Save Failed Order
     globalOrders.insert(
       0,
       OrderModel(

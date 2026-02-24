@@ -3,6 +3,9 @@ import 'package:my_app/totalFoodItems.dart';
 import 'healthy_screen.dart';
 import 'fitness_screen.dart';
 import 'diet_screen.dart';
+import 'plans_screen.dart';
+import 'plan_manager.dart';
+import 'billing_history_screen.dart';
 
 class homePageScreen extends StatefulWidget {
   const homePageScreen({super.key});
@@ -328,7 +331,17 @@ class _homePageScreenState extends State<homePageScreen> {
             ),
           ),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const PlansScreen(),
+                ),
+              );
+
+              // Refresh homepage when coming back (real-time upgrade/downgrade)
+              setState(() {});
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.orange,
               shape: RoundedRectangleBorder(
