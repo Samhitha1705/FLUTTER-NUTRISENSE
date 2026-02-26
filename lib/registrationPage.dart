@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'otp_verification_page.dart';
 
 class Registrationpage extends StatefulWidget {
   const Registrationpage({super.key});
@@ -8,94 +9,78 @@ class Registrationpage extends StatefulWidget {
 }
 
 class _RegistrationpageState extends State<Registrationpage> {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  final firstNameController = TextEditingController();
+  final lastNameController = TextEditingController();
+  final emailController = TextEditingController();
+  final phoneController = TextEditingController();
+  final passwordController = TextEditingController();
   bool visiblePassword = true;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
-          // Background Image
           SizedBox.expand(
-            child: Image.asset(
-              "assets/images/food_bg.jpg",
-              fit: BoxFit.cover,
-            ),
-          ),
-
-          // Dark Overlay
-          Container(
-            color: Colors.black.withOpacity(0.6),
-          ),
-
+              child: Image.asset(
+                "assets/images/food_bg.jpg",
+                fit: BoxFit.cover,
+              )),
+          Container(color: Colors.black.withOpacity(0.6)),
           SafeArea(
             child: SingleChildScrollView(
-              padding: EdgeInsets.only(
-                left: 24,
-                right: 24,
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
+              padding: const EdgeInsets.all(24),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 80),
-
                   const Text(
                     "Create Account",
                     style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
-
-                  const SizedBox(height: 8),
-
-                  const Text(
-                    "Sign up to continue",
-                    style: TextStyle(color: Colors.white70),
-                  ),
-
                   const SizedBox(height: 40),
-
-                  // White Card
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.95),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+                        color: Colors.white.withOpacity(0.95),
+                        borderRadius: BorderRadius.circular(20)),
                     child: Column(
                       children: [
                         TextField(
-                          controller: nameController,
-                          decoration: const InputDecoration(
-                            labelText: "Full Name",
-                          ),
+                          controller: firstNameController,
+                          decoration:
+                          const InputDecoration(labelText: "First Name"),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 15),
+                        TextField(
+                          controller: lastNameController,
+                          decoration:
+                          const InputDecoration(labelText: "Last Name"),
+                        ),
+                        const SizedBox(height: 15),
                         TextField(
                           controller: emailController,
-                          decoration: const InputDecoration(
-                            labelText: "Email",
-                          ),
+                          decoration:
+                          const InputDecoration(labelText: "Email"),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 15),
+                        TextField(
+                          controller: phoneController,
+                          decoration:
+                          const InputDecoration(labelText: "Phone"),
+                        ),
+                        const SizedBox(height: 15),
                         TextField(
                           controller: passwordController,
                           obscureText: visiblePassword,
                           decoration: InputDecoration(
                             labelText: "Password",
                             suffixIcon: IconButton(
-                              icon: Icon(
-                                visiblePassword
-                                    ? Icons.visibility
-                                    : Icons.visibility_off,
-                              ),
+                              icon: Icon(visiblePassword
+                                  ? Icons.visibility
+                                  : Icons.visibility_off),
                               onPressed: () {
                                 setState(() {
                                   visiblePassword = !visiblePassword;
@@ -111,51 +96,52 @@ class _RegistrationpageState extends State<Registrationpage> {
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFE23744),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
                             ),
                             onPressed: () {
-                              if (nameController.text.isEmpty ||
-                                  emailController.text.isEmpty ||
-                                  passwordController.text.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("Please fill all fields"),
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => OtpVerificationPage(
+                                    email: emailController.text,
+                                    password: passwordController.text,
+                                    firstName: firstNameController.text,
+                                    lastName: lastNameController.text,
+                                    phone: phoneController.text,
                                   ),
-                                );
-                              } else {
-                                Navigator.pop(context);
-                              }
+                                ),
+                              );
                             },
                             child: const Text(
                               "Register",
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text("Already have an account? "),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context);
+                              },
+                              child: const Text(
+                                "Login",
+                                style: TextStyle(
+                                    color: Color(0xFFE23744),
+                                    fontWeight: FontWeight.bold),
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          child: const Text(
-                            "Already have an account? Login",
-                            style: TextStyle(
-                              color: Color(0xFFE23744),
-                            ),
-                          ),
-                        ),
+                          ],
+                        )
                       ],
                     ),
-                  ),
+                  )
                 ],
               ),
             ),
-          ),
+          )
         ],
       ),
     );
