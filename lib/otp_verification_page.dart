@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'auth_storage.dart';
-import 'statefull.dart';
+//import 'statefull.dart';
+import 'login_page.dart';
 
 class OtpVerificationPage extends StatefulWidget {
   final String email;
@@ -94,10 +95,16 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                                       content: Text("Registered Successfully")));
 
                               // ✅ Navigate to Dashboard after OTP
+                              // Navigator.pushAndRemoveUntil(
+                              //   context,
+                              //   MaterialPageRoute(
+                              //       builder: (_) => const StatefulDashboard()),
+                              //       (route) => false,
+                              // );
+
                               Navigator.pushAndRemoveUntil(
                                 context,
-                                MaterialPageRoute(
-                                    builder: (_) => const StatefulDashboard()),
+                                MaterialPageRoute(builder: (_) => const LoginPage()),
                                     (route) => false,
                               );
                             } else {
