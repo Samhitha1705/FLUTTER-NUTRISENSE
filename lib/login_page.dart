@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'forgot_password_page.dart';
+import 'forgot_password_email_page.dart';
 import 'registrationPage.dart';
 import 'statefull.dart';
 import 'auth_storage.dart';
@@ -90,11 +90,12 @@ class _LoginPageState extends State<LoginPage> {
                           alignment: Alignment.centerRight,
                           child: TextButton(
                             onPressed: () {
+                              // Navigate to new forgot password flow
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                     builder: (_) =>
-                                    const ForgotPasswordPage()),
+                                    const ForgotPasswordEmailPage()),
                               );
                             },
                             child: const Text(
