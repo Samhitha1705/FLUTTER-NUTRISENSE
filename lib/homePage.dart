@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // ✅ ADDED
 import 'package:my_app/totalFoodItems.dart';
 import 'healthy_screen.dart';
 import 'fitness_screen.dart';
@@ -6,6 +7,7 @@ import 'diet_screen.dart';
 import 'plans_screen.dart';
 import 'plan_manager.dart';
 import 'billing_history_screen.dart';
+import 'notification_page.dart';
 
 class homePageScreen extends StatefulWidget {
   const homePageScreen({super.key});
@@ -47,32 +49,50 @@ class _homePageScreenState extends State<homePageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _heroBanner(),
-          const SizedBox(height: 24),
-          _categories(),
-          const SizedBox(height: 28),
-          _appointmentCard(),
-          if (selectedDate != null &&
-              selectedTime != null &&
-              selectedNutritionist != null) ...[
-            const SizedBox(height: 16),
-            _upcomingAppointment(),
-          ],
-          const SizedBox(height: 32),
-          _featuredMeals(),
-          const SizedBox(height: 24),
-          _followPlanCard(),
-          const SizedBox(height: 40),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("NutriSense"),
+        backgroundColor: Colors.green,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const NotificationPage(),
+                ),
+              );
+            },
+          ),
         ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _heroBanner(),
+            const SizedBox(height: 24),
+            _categories(),
+            const SizedBox(height: 28),
+            _appointmentCard(),
+            if (selectedDate != null &&
+                selectedTime != null &&
+                selectedNutritionist != null) ...[
+              const SizedBox(height: 16),
+              _upcomingAppointment(),
+            ],
+            const SizedBox(height: 32),
+            _featuredMeals(),
+            const SizedBox(height: 24),
+            _followPlanCard(),
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }
-
   // -------- HERO BANNER --------
   Widget _heroBanner() {
     return Container(
@@ -90,7 +110,7 @@ class _homePageScreenState extends State<homePageScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            getGreeting(), // 👋 removed
+            getGreeting(),
             style: const TextStyle(color: Colors.white70, fontSize: 16),
           ),
           const SizedBox(height: 8),
@@ -338,8 +358,6 @@ class _homePageScreenState extends State<homePageScreen> {
                   builder: (_) => const PlansScreen(),
                 ),
               );
-
-              // Refresh homepage when coming back (real-time upgrade/downgrade)
               setState(() {});
             },
             style: ElevatedButton.styleFrom(
@@ -355,7 +373,7 @@ class _homePageScreenState extends State<homePageScreen> {
     );
   }
 
-  // -------- BOTTOM SHEET (UNIVERSAL SAFE) --------
+  // -------- BOTTOM SHEET --------
   void _openAppointmentSheet() {
     final slots = generateSlots();
 
@@ -432,7 +450,8 @@ class _homePageScreenState extends State<homePageScreen> {
                         children: slots.map((slot) {
                           final isBooked =
                               bookedSlots[selectedDate]
-                                  ?.contains("$selectedNutritionist-$slot") ??
+                                  ?.contains(
+                                  "$selectedNutritionist-$slot") ??
                                   false;
 
                           return ChoiceChip(
@@ -450,7 +469,7 @@ class _homePageScreenState extends State<homePageScreen> {
 
                       const SizedBox(height: 20),
 
-                      // ✅ UNIVERSAL SAFE CONFIRM BUTTON
+                      // ✅ CONFIRM BUTTON WITH NOTIFICATION SAVE
                       Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: ElevatedButton(
@@ -461,7 +480,23 @@ class _homePageScreenState extends State<homePageScreen> {
                           onPressed: selectedNutritionist != null &&
                               selectedDate != null &&
                               selectedTime != null
-                              ? () {
+                              ? () async {
+                            final prefs =
+                            await SharedPreferences.getInstance();
+                            List<String> notifications =
+                                prefs.getStringList("notifications") ??
+                                    [];
+
+                            notifications.insert(
+                              0,
+                              "Appointment booked with $selectedNutritionist on "
+                                  "${selectedDate!.day}-${selectedDate!.month}-${selectedDate!.year} "
+                                  "at $selectedTime",
+                            );
+
+                            await prefs.setStringList(
+                                "notifications", notifications);
+
                             bookedSlots
                                 .putIfAbsent(selectedDate!, () => {});
                             bookedSlots[selectedDate!]!.add(

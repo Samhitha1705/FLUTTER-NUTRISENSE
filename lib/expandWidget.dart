@@ -8,6 +8,12 @@ import 'my_orders.dart';
 import 'address_book_page.dart';
 import 'reviews_page.dart';
 
+// ✅ Your Existing Medical Pages
+import 'medical_conditions_page.dart';
+import 'allergies_page.dart';
+import 'lifestyle_page.dart';
+import 'goals_page.dart';
+
 class ExpandWidget extends StatefulWidget {
   const ExpandWidget({super.key});
 
@@ -95,6 +101,7 @@ class _ExpandWidgetState extends State<ExpandWidget> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+
             /// 👤 PROFILE IMAGE
             GestureDetector(
               onTap: pickImage,
@@ -120,9 +127,12 @@ class _ExpandWidgetState extends State<ExpandWidget> {
 
             /// ⚧ GENDER
             Text("Gender: $gender", style: const TextStyle(color: Colors.grey)),
+
             /// 🎂 DOB
             Text(
-              dob != null ? "DOB: ${dob!.day}/${dob!.month}/${dob!.year}" : "DOB: Not set",
+              dob != null
+                  ? "DOB: ${dob!.day}/${dob!.month}/${dob!.year}"
+                  : "DOB: Not set",
               style: const TextStyle(color: Colors.grey),
             ),
 
@@ -142,6 +152,61 @@ class _ExpandWidgetState extends State<ExpandWidget> {
 
             const Divider(height: 30),
 
+            /// 🔹 MEDICAL INFORMATION SECTION (NEW)
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                "Medical Information",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+
+            ListTile(
+              leading: const Icon(Icons.medical_services_outlined),
+              title: const Text("Medical Conditions"),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MedicalConditionsPage()),
+                );
+              },
+            ),
+
+            ListTile(
+              leading: const Icon(Icons.warning_amber_outlined),
+              title: const Text("Allergies"),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AllergiesPage()),
+                );
+              },
+            ),
+
+            ListTile(
+              leading: const Icon(Icons.self_improvement_outlined),
+              title: const Text("Lifestyle"),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LifestylePage()),
+                );
+              },
+            ),
+
+            ListTile(
+              leading: const Icon(Icons.flag_outlined),
+              title: const Text("Health Goals"),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const GoalsPage()),
+                );
+              },
+            ),
+
+            const Divider(height: 30),
+
             /// 🔹 PREFERENCES
             const Align(
               alignment: Alignment.centerLeft,
@@ -150,6 +215,7 @@ class _ExpandWidgetState extends State<ExpandWidget> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
+
             SwitchListTile(
               title: const Text("Veg Mode"),
               value: vegMode,
@@ -157,6 +223,7 @@ class _ExpandWidgetState extends State<ExpandWidget> {
                 setState(() => vegMode = val);
               },
             ),
+
             SwitchListTile(
               title: const Text("Show Personalized Ratings"),
               value: personalizedRatings,
@@ -164,6 +231,7 @@ class _ExpandWidgetState extends State<ExpandWidget> {
                 setState(() => personalizedRatings = val);
               },
             ),
+
             SwitchListTile(
               title: const Text("Dark Mode"),
               value: darkMode,
@@ -182,6 +250,7 @@ class _ExpandWidgetState extends State<ExpandWidget> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
+
             ListTile(
               leading: const Icon(Icons.shopping_bag_outlined),
               title: const Text("Your Orders"),
@@ -192,6 +261,7 @@ class _ExpandWidgetState extends State<ExpandWidget> {
                 );
               },
             ),
+
             ListTile(
               leading: const Icon(Icons.location_on_outlined),
               title: const Text("Address Book"),
@@ -202,6 +272,7 @@ class _ExpandWidgetState extends State<ExpandWidget> {
                 );
               },
             ),
+
             ListTile(
               leading: const Icon(Icons.rate_review_outlined),
               title: const Text("My Reviews"),
