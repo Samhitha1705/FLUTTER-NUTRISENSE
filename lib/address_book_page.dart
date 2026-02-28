@@ -68,6 +68,45 @@ class _AddressBookPageState extends State<AddressBookPage> {
 
     await saveAddresses();
     setState(() {});
+
+    // ✅ Show Snackbar
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Address deleted successfully"),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  // ✅ CONFIRM DELETE DIALOG
+  Future<void> confirmDelete(int index) async {
+    bool? result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Address"),
+        content: const Text(
+          "Are you sure you want to delete this address?\n\nThis action cannot be undone.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("No"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              "Yes",
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true) {
+      deleteAddress(index);
+    }
   }
 
   // ✅ SET DEFAULT
@@ -131,7 +170,6 @@ class _AddressBookPageState extends State<AddressBookPage> {
                       "Phone: ${address.countryCode} ${address.receiverPhone}"),
               isThreeLine: true,
 
-              // ✅ FIXED HERE (IMPORTANT)
               onTap: () async {
                 await setDefault(index);
 
@@ -157,7 +195,7 @@ class _AddressBookPageState extends State<AddressBookPage> {
                     icon: const Icon(Icons.delete,
                         color: Colors.red),
                     onPressed: () =>
-                        deleteAddress(index),
+                        confirmDelete(index), // ✅ Updated
                   ),
                 ],
               ),

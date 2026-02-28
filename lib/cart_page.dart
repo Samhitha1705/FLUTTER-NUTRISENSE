@@ -29,16 +29,13 @@ class _CartPageState extends State<CartPage> {
     });
   }
 
-  /// ✅ UPDATED FUNCTION
   void decreaseQty(int index) {
     setState(() {
       if (globalCart[index].quantity > 1) {
         globalCart[index].quantity--;
       } else {
-        // If quantity is 1 → remove item
         globalCart.removeAt(index);
 
-        // If cart becomes empty → go back to previous screen
         if (globalCart.isEmpty) {
           Navigator.pop(context);
         }
@@ -50,7 +47,6 @@ class _CartPageState extends State<CartPage> {
     setState(() {
       globalCart.removeAt(index);
 
-      // If cart becomes empty after delete
       if (globalCart.isEmpty) {
         Navigator.pop(context);
       }
@@ -186,8 +182,12 @@ class _CartPageState extends State<CartPage> {
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
+                      foregroundColor: Colors.white, // ✅ White text
                       minimumSize:
                       const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                     onPressed: selectedAddress == null
                         ? null
@@ -207,7 +207,12 @@ class _CartPageState extends State<CartPage> {
                         ),
                       );
                     },
-                    child: const Text("Place Order"),
+                    child: const Text(
+                      "Place Order",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   )
                 ],
               ),
