@@ -1,52 +1,69 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthStorage {
-  // Save user during registration
-  static Future<void> saveUser(
-      String email,
-      String password,
-      String firstName,
-      String lastName,
-      String phone,
-      ) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('email', email);
-    await prefs.setString('password', password);
-    await prefs.setString('firstName', firstName);
-    await prefs.setString('lastName', lastName);
-    await prefs.setString('phone', phone);
-  }
+  static const String baseUrl = "http://10.0.2.2:8080/api/v1/customers";
 
-  // Update password only, without touching other fields
-  static Future<void> updatePassword(String email, String newPassword) async {
-    final prefs = await SharedPreferences.getInstance();
-    String? savedEmail = prefs.getString('email');
+  // Login API
+  static Future<bool> login(String email, String password) async {
+    final url = Uri.parse("$baseUrl/login");
 
-    if (savedEmail == email) {
-      await prefs.setString('password', newPassword);
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"email": email, "password": password}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString("token", data["token"] ?? "");
+        await prefs.setBool("isLoggedIn", true);
+
+        // Save user data if available
+        if (data.containsKey('user')) {
+          await saveUser(data['user']);
+        }
+
+        return true;
+      } else {
+        final body = jsonDecode(response.body);
+        print(body["message"]);
+        return false;
+      }
+    } catch (e) {
+      print("Error: $e");
+      return false;
     }
   }
 
-  static Future<bool> login(String email, String password) async {
-    final prefs = await SharedPreferences.getInstance();
-    String? savedEmail = prefs.getString('email');
-    String? savedPassword = prefs.getString('password');
-
-    return email == savedEmail && password == savedPassword;
-  }
-
+  // Set login status
   static Future<void> setLoggedIn(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isLoggedIn', value);
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool("isLoggedIn", value);
   }
 
-  static Future<bool> isLoggedIn() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool('isLoggedIn') ?? false;
-  }
+  // ✅ Save user data (single Map argument)
+  static Future<void> saveUser(Map<String, dynamic> userData) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
 
-  static Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isLoggedIn', false);
+    if (userData.containsKey('email')) {
+      await prefs.setString('userEmail', userData['email']);
+    }
+    if (userData.containsKey('password')) {
+      await prefs.setString('userPassword', userData['password']);
+    }
+    if (userData.containsKey('firstName')) {
+      await prefs.setString('firstName', userData['firstName']);
+    }
+    if (userData.containsKey('lastName')) {
+      await prefs.setString('lastName', userData['lastName']);
+    }
+    if (userData.containsKey('phone')) {
+      await prefs.setString('phone', userData['phone']);
+    }
   }
 }
