@@ -18,7 +18,7 @@ dependencies:
   animated_splash_screen: ^1.3.0
 
   # ---------------- PROFILE ----------------
-  shared_preferences: ^2.2.3
+  shared_preferences: ^2.5.4
   image_picker: ^1.1.2
 
   # ---------------- NETWORK ----------------
