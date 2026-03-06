@@ -2,18 +2,19 @@ import 'package:flutter/material.dart';
 import 'order_storage.dart';
 
 class MyOrdersPage extends StatefulWidget {
-  const MyOrdersPage({super.key});
+  final String token; // add this
+  const MyOrdersPage({super.key, required this.token}); // require token
 
   @override
   State<MyOrdersPage> createState() => _MyOrdersPageState();
 }
 
 class _MyOrdersPageState extends State<MyOrdersPage> {
-
   @override
   void initState() {
     super.initState();
 
+    // Simulate refresh
     Future.doWhile(() async {
       await Future.delayed(const Duration(seconds: 1));
       if (mounted) setState(() {});
@@ -51,7 +52,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
 
           return Card(
             margin: const EdgeInsets.all(10),
-            child: InkWell(   // ✅ MAKES IT CLICKABLE
+            child: InkWell(
               borderRadius: BorderRadius.circular(12),
               onTap: () {
                 Navigator.pushNamed(
@@ -60,8 +61,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
                   arguments: {
                     "title": order.title,
                     "image": order.image,
-                    "description":
-                    "This is your previously ordered item.",
+                    "description": "This is your previously ordered item.",
                     "price": order.price.toString(),
                     "category": order.category,
                   },

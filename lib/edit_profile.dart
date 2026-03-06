@@ -1,201 +1,148 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class EditProfilePage extends StatefulWidget {
-  const EditProfilePage({super.key});
+  final String token;
+  const EditProfilePage({super.key, required this.token});
 
   @override
   State<EditProfilePage> createState() => _EditProfilePageState();
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  TextEditingController nameController = TextEditingController();
-  TextEditingController emailController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
+  TextEditingController firstNameController = TextEditingController();
+  TextEditingController lastNameController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
+  TextEditingController goalController = TextEditingController();
+  TextEditingController healthHistoryController = TextEditingController();
+  String activityLevel = "Low";
 
-  File? imageFile;
-  String gender = "Other";
-  DateTime? dob;
+  final List<String> activityOptions = ["Low", "Medium", "High"];
 
-  final List<String> genderOptions = ["Male", "Female", "Other"];
+  bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    loadProfile();
+    fetchProfile();
   }
 
-  Future loadProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    nameController.text = prefs.getString("name") ?? "";
-    emailController.text = prefs.getString("email") ?? "";
-    phoneController.text = prefs.getString("phone") ?? "";
-
-    String? imagePath = prefs.getString("imagePath");
-    if (imagePath != null) imageFile = File(imagePath);
-
-    gender = prefs.getString("gender") ?? "Other";
-
-    String? dobStr = prefs.getString("dob");
-    if (dobStr != null) dob = DateTime.tryParse(dobStr);
-
-    setState(() {});
-  }
-
-  Future pickImage() async {
-    final prefs = await SharedPreferences.getInstance();
-    showModalBottomSheet(
-      context: context,
-      builder: (_) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Gallery'),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-                if (picked != null) {
-                  setState(() => imageFile = File(picked.path));
-                  await prefs.setString("imagePath", picked.path);
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Camera'),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked = await ImagePicker().pickImage(source: ImageSource.camera);
-                if (picked != null) {
-                  setState(() => imageFile = File(picked.path));
-                  await prefs.setString("imagePath", picked.path);
-                }
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future pickDOB() async {
-    DateTime initialDate = dob ?? DateTime(2000);
-    DateTime firstDate = DateTime(1900);
-    DateTime lastDate = DateTime.now();
-
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: firstDate,
-      lastDate: lastDate,
+  Future<void> fetchProfile() async {
+    final response = await http.get(
+      Uri.parse('http://192.168.100.162:8080/api/v1/customers'),
+      headers: {'Authorization': 'Bearer ${widget.token}'},
     );
 
-    if (pickedDate != null) {
-      setState(() => dob = pickedDate);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        firstNameController.text = data['firstName'] ?? "";
+        lastNameController.text = data['lastName'] ?? "";
+        phoneController.text = data['phone'] ?? "";
+        goalController.text = data['goal'] ?? "";
+        healthHistoryController.text = data['healthHistory'] ?? "";
+        activityLevel = data['activityLevel'] ?? "Low";
+      });
+    } else {
+      print("Error fetching profile: ${response.statusCode}");
     }
   }
 
-  Future saveProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString("name", nameController.text);
-    await prefs.setString("email", emailController.text);
-    await prefs.setString("phone", phoneController.text);
-    await prefs.setString("gender", gender);
-    if (dob != null) {
-      await prefs.setString("dob", dob!.toIso8601String());
-    }
-    if (imageFile != null) {
-      await prefs.setString("imagePath", imageFile!.path);
-    }
+  Future<void> updateProfile() async {
+    if (!_formKey.currentState!.validate()) return;
 
-    Navigator.pop(context, true); // Indicate update
+    setState(() {
+      isLoading = true;
+    });
+
+    final body = {
+      "firstName": firstNameController.text.trim(),
+      "lastName": lastNameController.text.trim(),
+      "phone": phoneController.text.trim(),
+      "goal": goalController.text.trim(),
+      "healthHistory": healthHistoryController.text.trim(),
+      "activityLevel": activityLevel,
+    };
+
+    final response = await http.put(
+      Uri.parse('http://192.168.100.162:8080/api/v1/customers'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${widget.token}'
+      },
+      body: jsonEncode(body),
+    );
+
+    setState(() {
+      isLoading = false;
+    });
+
+    if (response.statusCode == 200) {
+      Navigator.pop(context, true); // Return true to refresh profile
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to update profile: ${response.statusCode}")),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Edit Profile")),
-      body: SingleChildScrollView(
+      appBar: AppBar(title: const Text("Edit Profile"), backgroundColor: Colors.green),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            GestureDetector(
-              onTap: pickImage,
-              child: CircleAvatar(
-                radius: 50,
-                backgroundImage: imageFile != null ? FileImage(imageFile!) : null,
-                child: imageFile == null ? const Icon(Icons.person, size: 50) : null,
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: firstNameController,
+                decoration: const InputDecoration(labelText: "First Name"),
+                validator: (val) => val == null || val.isEmpty ? "Required" : null,
               ),
-            ),
-            const SizedBox(height: 20),
-
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: "Name",
-                border: OutlineInputBorder(),
+              TextFormField(
+                controller: lastNameController,
+                decoration: const InputDecoration(labelText: "Last Name"),
+                validator: (val) => val == null || val.isEmpty ? "Required" : null,
               ),
-            ),
-            const SizedBox(height: 15),
-
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(
-                labelText: "Email",
-                border: OutlineInputBorder(),
+              TextFormField(
+                controller: phoneController,
+                decoration: const InputDecoration(labelText: "Phone"),
+                keyboardType: TextInputType.phone,
+                validator: (val) => val == null || val.isEmpty ? "Required" : null,
               ),
-            ),
-            const SizedBox(height: 15),
-
-            TextField(
-              controller: phoneController,
-              decoration: const InputDecoration(
-                labelText: "Phone",
-                border: OutlineInputBorder(),
+              TextFormField(
+                controller: goalController,
+                decoration: const InputDecoration(labelText: "Goal"),
               ),
-            ),
-            const SizedBox(height: 15),
-
-            // Gender dropdown
-            DropdownButtonFormField<String>(
-              value: genderOptions.contains(gender) ? gender : null,
-              items: genderOptions
-                  .map((g) => DropdownMenuItem(value: g, child: Text(g)))
-                  .toList(),
-              onChanged: (val) {
-                if (val != null) setState(() => gender = val);
-              },
-              decoration: const InputDecoration(
-                labelText: "Gender",
-                border: OutlineInputBorder(),
+              TextFormField(
+                controller: healthHistoryController,
+                decoration: const InputDecoration(labelText: "Health History"),
               ),
-            ),
-            const SizedBox(height: 15),
-
-            // DOB picker
-            GestureDetector(
-              onTap: pickDOB,
-              child: AbsorbPointer(
-                child: TextField(
-                  decoration: InputDecoration(
-                    labelText: dob != null
-                        ? "DOB: ${dob!.day}/${dob!.month}/${dob!.year}"
-                        : "Select Date of Birth",
-                    border: const OutlineInputBorder(),
-                  ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                value: activityLevel,
+                decoration: const InputDecoration(labelText: "Activity Level"),
+                items: activityOptions.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                onChanged: (val) => setState(() => activityLevel = val!),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: updateProfile,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  minimumSize: const Size(double.infinity, 50),
                 ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            ElevatedButton(
-              onPressed: saveProfile,
-              child: const Text("Save"),
-            ),
-          ],
+                child: const Text("Update Profile", style: TextStyle(fontWeight: FontWeight.bold)),
+              )
+            ],
+          ),
         ),
       ),
     );

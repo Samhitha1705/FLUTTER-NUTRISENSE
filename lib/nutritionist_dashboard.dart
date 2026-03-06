@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'login_page.dart';
 
 class NutritionistDashboard extends StatelessWidget {
-  const NutritionistDashboard({super.key});
+  const NutritionistDashboard({super.key, required token});
 
   void logout(BuildContext context) {
     Navigator.pushAndRemoveUntil(

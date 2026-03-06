@@ -12,6 +12,7 @@ class Aboutfood extends StatefulWidget {
   final String description;
   final String price;
   final String category;
+  final String token; // ✅ add token
 
   const Aboutfood({
     super.key,
@@ -20,6 +21,7 @@ class Aboutfood extends StatefulWidget {
     required this.description,
     required this.price,
     required this.category,
+    required this.token, // ✅ required
   });
 
   @override
@@ -27,7 +29,6 @@ class Aboutfood extends StatefulWidget {
 }
 
 class _AboutfoodState extends State<Aboutfood> {
-
   bool isWishlisted = false;
 
   @override
@@ -98,18 +99,14 @@ class _AboutfoodState extends State<Aboutfood> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
-
           /// WISHLIST HEART ICON
           IconButton(
             icon: Icon(
-              isWishlisted
-                  ? Icons.favorite
-                  : Icons.favorite_border,
+              isWishlisted ? Icons.favorite : Icons.favorite_border,
               color: Colors.red,
             ),
             onPressed: toggleWishlist,
@@ -122,19 +119,17 @@ class _AboutfoodState extends State<Aboutfood> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const CartPage(),
+                  builder: (_) => CartPage(token: widget.token), // ✅ pass token
                 ),
               );
             },
           ),
         ],
       ),
-
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             /// FOOD IMAGE
             CachedNetworkImage(
               imageUrl: widget.image,
@@ -142,7 +137,6 @@ class _AboutfoodState extends State<Aboutfood> {
               width: double.infinity,
               fit: BoxFit.cover,
             ),
-
             const SizedBox(height: 15),
 
             /// TITLE
@@ -150,13 +144,9 @@ class _AboutfoodState extends State<Aboutfood> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 widget.title,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
             ),
-
             const SizedBox(height: 10),
 
             /// PRICE
@@ -164,14 +154,9 @@ class _AboutfoodState extends State<Aboutfood> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 "₹${widget.price}",
-                style: const TextStyle(
-                  fontSize: 20,
-                  color: Colors.black,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: const TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.w600),
               ),
             ),
-
             const SizedBox(height: 15),
 
             /// DESCRIPTION
@@ -182,7 +167,6 @@ class _AboutfoodState extends State<Aboutfood> {
                 style: const TextStyle(fontSize: 16),
               ),
             ),
-
             const SizedBox(height: 30),
 
             /// BUTTONS
@@ -191,16 +175,13 @@ class _AboutfoodState extends State<Aboutfood> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
-                  //color: Colors.white,
-                  foregroundColor: Colors.white, // ✅ TEXT COLOR HERE
-
+                  foregroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 50),
                 ),
                 onPressed: addToCart,
                 child: const Text("Add to Cart"),
               ),
             ),
-
             const SizedBox(height: 20),
 
             /// VIEW CART BUTTON
@@ -216,14 +197,13 @@ class _AboutfoodState extends State<Aboutfood> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const CartPage(),
+                      builder: (_) => CartPage(token: widget.token), // ✅ pass token
                     ),
                   );
                 },
                 child: const Text("Go to Cart"),
               ),
             ),
-
             const SizedBox(height: 30),
           ],
         ),

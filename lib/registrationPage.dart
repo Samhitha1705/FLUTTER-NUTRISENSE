@@ -46,6 +46,15 @@ class _RegistrationpageState extends State<Registrationpage> {
       return;
     }
 
+    if (!isValidPassword(passwordController.text)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Password must contain uppercase, lowercase, number and special character"),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       isLoading = true;
     });
@@ -60,24 +69,25 @@ class _RegistrationpageState extends State<Registrationpage> {
         url = Uri.parse("http://192.168.100.162:8080/api/v1/customers");
 
         body = {
-          "email": emailController.text,
-          "passwordHash": passwordController.text,
-          "firstName": firstNameController.text,
-          "lastName": lastNameController.text,
-          "phone": phoneController.text
+          "email": emailController.text.trim(),
+          "passwordHash": passwordController.text.trim(),
+          "firstName": firstNameController.text.trim(),
+          "lastName": lastNameController.text.trim(),
+          "phone": phoneController.text.trim()
         };
+
       } else {
 
         url = Uri.parse("http://192.168.100.162:8080/api/v1/nutritionists");
 
         body = {
-          "email": emailController.text,
-          "password": passwordController.text,
-          "firstName": firstNameController.text,
-          "lastName": lastNameController.text,
-          "phone": phoneController.text,
-          "qualification": qualificationController.text,
-          "specialization": specializationController.text
+          "email": emailController.text.trim(),
+          "passwordHash": passwordController.text.trim(),
+          "firstName": firstNameController.text.trim(),
+          "lastName": lastNameController.text.trim(),
+          "phone": phoneController.text.trim(),
+          "qualification": qualificationController.text.trim(),
+          "specialization": specializationController.text.trim()
         };
       }
 
@@ -87,8 +97,8 @@ class _RegistrationpageState extends State<Registrationpage> {
         body: jsonEncode(body),
       );
 
-      print(response.statusCode);
-      print(response.body);
+      print("Status: ${response.statusCode}");
+      print("Response: ${response.body}");
 
       if (response.statusCode == 200 ||
           response.statusCode == 201 ||
@@ -113,7 +123,6 @@ class _RegistrationpageState extends State<Registrationpage> {
         String errorMessage = "Registration failed";
 
         try {
-
           final data = jsonDecode(response.body);
 
           if (data["message"] != null) {
@@ -134,12 +143,36 @@ class _RegistrationpageState extends State<Registrationpage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Network error: $e")),
       );
-
     }
 
     setState(() {
       isLoading = false;
     });
+  }
+
+  Widget buildTextField(TextEditingController controller, String label,
+      {bool isPassword = false}) {
+
+    return TextField(
+      controller: controller,
+      obscureText: isPassword ? visiblePassword : false,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+
+        suffixIcon: isPassword
+            ? IconButton(
+          icon: Icon(
+              visiblePassword ? Icons.visibility : Icons.visibility_off),
+          onPressed: () {
+            setState(() {
+              visiblePassword = !visiblePassword;
+            });
+          },
+        )
+            : null,
+      ),
+    );
   }
 
   @override
@@ -161,7 +194,6 @@ class _RegistrationpageState extends State<Registrationpage> {
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-
               child: Column(
                 children: [
 
@@ -179,7 +211,6 @@ class _RegistrationpageState extends State<Registrationpage> {
 
                   Container(
                     padding: const EdgeInsets.all(20),
-
                     decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.95),
                         borderRadius: BorderRadius.circular(20)),
@@ -187,37 +218,23 @@ class _RegistrationpageState extends State<Registrationpage> {
                     child: Column(
                       children: [
 
-                        TextField(
-                          controller: firstNameController,
-                          decoration: const InputDecoration(labelText: "First Name"),
-                        ),
-
+                        buildTextField(firstNameController, "First Name"),
                         const SizedBox(height: 15),
 
-                        TextField(
-                          controller: lastNameController,
-                          decoration: const InputDecoration(labelText: "Last Name"),
-                        ),
-
+                        buildTextField(lastNameController, "Last Name"),
                         const SizedBox(height: 15),
 
-                        TextField(
-                          controller: emailController,
-                          decoration: const InputDecoration(labelText: "Email"),
-                        ),
-
+                        buildTextField(emailController, "Email"),
                         const SizedBox(height: 15),
 
-                        TextField(
-                          controller: phoneController,
-                          decoration: const InputDecoration(labelText: "Phone"),
-                        ),
-
+                        buildTextField(phoneController, "Phone"),
                         const SizedBox(height: 15),
 
                         DropdownButtonFormField<String>(
                           value: selectedRole,
-                          decoration: const InputDecoration(labelText: "I am a"),
+                          decoration: const InputDecoration(
+                              labelText: "I am a",
+                              border: OutlineInputBorder()),
 
                           items: const [
                             DropdownMenuItem(
@@ -241,42 +258,19 @@ class _RegistrationpageState extends State<Registrationpage> {
 
                           const SizedBox(height: 15),
 
-                          TextField(
-                            controller: qualificationController,
-                            decoration: const InputDecoration(labelText: "Qualification"),
-                          ),
+                          buildTextField(
+                              qualificationController, "Qualification"),
 
                           const SizedBox(height: 15),
 
-                          TextField(
-                            controller: specializationController,
-                            decoration: const InputDecoration(labelText: "Specialization"),
-                          ),
+                          buildTextField(
+                              specializationController, "Specialization"),
                         ],
 
                         const SizedBox(height: 15),
 
-                        TextField(
-                          controller: passwordController,
-                          obscureText: visiblePassword,
-
-                          decoration: InputDecoration(
-                            labelText: "Password",
-
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                  visiblePassword
-                                      ? Icons.visibility
-                                      : Icons.visibility_off),
-
-                              onPressed: () {
-                                setState(() {
-                                  visiblePassword = !visiblePassword;
-                                });
-                              },
-                            ),
-                          ),
-                        ),
+                        buildTextField(passwordController, "Password",
+                            isPassword: true),
 
                         const SizedBox(height: 30),
 
@@ -292,7 +286,8 @@ class _RegistrationpageState extends State<Registrationpage> {
                             onPressed: isLoading ? null : registerUser,
 
                             child: isLoading
-                                ? const CircularProgressIndicator(color: Colors.white)
+                                ? const CircularProgressIndicator(
+                                color: Colors.white)
                                 : const Text(
                               "Register",
                               style: TextStyle(color: Colors.white),
@@ -320,7 +315,6 @@ class _RegistrationpageState extends State<Registrationpage> {
                                     fontWeight: FontWeight.bold),
                               ),
                             )
-
                           ],
                         )
                       ],

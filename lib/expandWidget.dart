@@ -1,21 +1,13 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:image_picker/image_picker.dart';
-
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'edit_profile.dart';
-import 'my_orders.dart';
 import 'address_book_page.dart';
-import 'reviews_page.dart';
-
-// ✅ Your Existing Medical Pages
-import 'medical_conditions_page.dart';
-import 'allergies_page.dart';
-import 'lifestyle_page.dart';
-import 'goals_page.dart';
+import 'my_orders.dart';
 
 class ExpandWidget extends StatefulWidget {
-  const ExpandWidget({super.key});
+  final String token;
+  const ExpandWidget({super.key, required this.token});
 
   @override
   State<ExpandWidget> createState() => _ExpandWidgetState();
@@ -25,263 +17,80 @@ class _ExpandWidgetState extends State<ExpandWidget> {
   String name = "";
   String email = "";
   String phone = "";
-  String? imagePath;
-  String gender = "Other";
-  DateTime? dob;
-
-  bool vegMode = false;
-  bool personalizedRatings = true;
-  bool darkMode = false;
+  String goal = "";
+  String healthHistory = "";
+  String activityLevel = "";
+  String createdAt = "";
 
   @override
   void initState() {
     super.initState();
-    loadProfile();
+    fetchProfile();
   }
 
-  Future loadProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      name = prefs.getString("name") ?? "";
-      email = prefs.getString("email") ?? "";
-      phone = prefs.getString("phone") ?? "";
-      imagePath = prefs.getString("imagePath");
-      gender = prefs.getString("gender") ?? "Other";
-
-      String? dobStr = prefs.getString("dob");
-      if (dobStr != null) dob = DateTime.tryParse(dobStr);
-    });
-  }
-
-  Future pickImage() async {
-    final prefs = await SharedPreferences.getInstance();
-    showModalBottomSheet(
-      context: context,
-      builder: (_) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Gallery'),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-                if (picked != null) {
-                  setState(() => imagePath = picked.path);
-                  await prefs.setString("imagePath", picked.path);
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Camera'),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked = await ImagePicker().pickImage(source: ImageSource.camera);
-                if (picked != null) {
-                  setState(() => imagePath = picked.path);
-                  await prefs.setString("imagePath", picked.path);
-                }
-              },
-            ),
-          ],
-        ),
-      ),
+  Future<void> fetchProfile() async {
+    final response = await http.get(
+      Uri.parse('http://192.168.100.162:8080/api/v1/customers'),
+      headers: {'Authorization': 'Bearer ${widget.token}'},
     );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        name = "${data['firstName']} ${data['lastName']}";
+        email = data['email'] ?? "";
+        phone = data['phone'] ?? "";
+        goal = data['goal'] ?? "";
+        healthHistory = data['healthHistory'] ?? "";
+        activityLevel = data['activityLevel'] ?? "";
+        createdAt = data['createdAt'] ?? "";
+      });
+    } else {
+      print("Error fetching profile: ${response.statusCode}");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Profile"),
-        backgroundColor: Colors.green,
-      ),
+      appBar: AppBar(title: const Text("Profile"), backgroundColor: Colors.green),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            /// 👤 PROFILE IMAGE
-            GestureDetector(
-              onTap: pickImage,
-              child: CircleAvatar(
-                radius: 50,
-                backgroundImage: imagePath != null ? FileImage(File(imagePath!)) : null,
-                child: imagePath == null ? const Icon(Icons.person, size: 50) : null,
-              ),
-            ),
+            Text(name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 5),
+            Text("Email: $email"),
+            Text("Phone: $phone"),
+            Text("Goal: $goal"),
+            Text("Health History: $healthHistory"),
+            Text("Activity Level: $activityLevel"),
+            Text("Account Created: $createdAt"),
             const SizedBox(height: 10),
-
-            /// 👤 NAME
-            Text(
-              name.isEmpty ? "No Name" : name,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-
-            /// 📧 EMAIL
-            Text(
-              email.isEmpty ? "No Email" : email,
-              style: const TextStyle(color: Colors.grey),
-            ),
-
-            /// ⚧ GENDER
-            Text("Gender: $gender", style: const TextStyle(color: Colors.grey)),
-
-            /// 🎂 DOB
-            Text(
-              dob != null
-                  ? "DOB: ${dob!.day}/${dob!.month}/${dob!.year}"
-                  : "DOB: Not set",
-              style: const TextStyle(color: Colors.grey),
-            ),
-
-            const SizedBox(height: 10),
-
-            /// ✏ EDIT PROFILE
             TextButton(
               onPressed: () async {
                 bool? updated = await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const EditProfilePage()),
+                  MaterialPageRoute(builder: (_) => EditProfilePage(token: widget.token)),
                 );
-                if (updated == true) loadProfile();
+                if (updated == true) fetchProfile();
               },
               child: const Text("Edit Profile"),
             ),
-
-            const Divider(height: 30),
-
-            /// 🔹 MEDICAL INFORMATION SECTION (NEW)
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "Medical Information",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.medical_services_outlined),
-              title: const Text("Medical Conditions"),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const MedicalConditionsPage()),
-                );
-              },
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.warning_amber_outlined),
-              title: const Text("Allergies"),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AllergiesPage()),
-                );
-              },
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.self_improvement_outlined),
-              title: const Text("Lifestyle"),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LifestylePage()),
-                );
-              },
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.flag_outlined),
-              title: const Text("Health Goals"),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const GoalsPage()),
-                );
-              },
-            ),
-
-            const Divider(height: 30),
-
-            /// 🔹 PREFERENCES
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "Your Preferences",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-
-            SwitchListTile(
-              title: const Text("Veg Mode"),
-              value: vegMode,
-              onChanged: (val) {
-                setState(() => vegMode = val);
-              },
-            ),
-
-            SwitchListTile(
-              title: const Text("Show Personalized Ratings"),
-              value: personalizedRatings,
-              onChanged: (val) {
-                setState(() => personalizedRatings = val);
-              },
-            ),
-
-            SwitchListTile(
-              title: const Text("Dark Mode"),
-              value: darkMode,
-              onChanged: (val) {
-                setState(() => darkMode = val);
-              },
-            ),
-
-            const Divider(height: 30),
-
-            /// 🔹 FOOD DELIVERY SECTION
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "Food Delivery",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-
             ListTile(
               leading: const Icon(Icons.shopping_bag_outlined),
               title: const Text("Your Orders"),
-              onTap: () {
-                Navigator.push(
+              onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const MyOrdersPage()),
-                );
-              },
+                  MaterialPageRoute(builder: (_) => MyOrdersPage(token: widget.token))),
             ),
-
             ListTile(
               leading: const Icon(Icons.location_on_outlined),
               title: const Text("Address Book"),
-              onTap: () {
-                Navigator.push(
+              onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const AddressBookPage()),
-                );
-              },
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.rate_review_outlined),
-              title: const Text("My Reviews"),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ReviewsPage()),
-                );
-              },
+                  MaterialPageRoute(builder: (_) => AddressBookPage(token: widget.token))),
             ),
           ],
         ),

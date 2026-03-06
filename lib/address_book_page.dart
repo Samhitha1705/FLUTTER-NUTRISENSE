@@ -1,11 +1,51 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'address_model.dart';
-import 'add_address_form.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+class AddressModel {
+  int id;
+  String houseNo;
+  String area;
+  String city;
+  String state;
+  String pincode;
+  String receiverName;
+  String receiverPhone;
+  String countryCode;
+  bool isDefault;
+
+  AddressModel({
+    required this.id,
+    required this.houseNo,
+    required this.area,
+    required this.city,
+    required this.state,
+    required this.pincode,
+    required this.receiverName,
+    required this.receiverPhone,
+    required this.countryCode,
+    this.isDefault = false,
+  });
+
+  factory AddressModel.fromJson(Map<String, dynamic> json) {
+    return AddressModel(
+      id: json['id'],
+      houseNo: json['houseNo'] ?? "",
+      area: json['area'] ?? "",
+      city: json['city'] ?? "",
+      state: json['state'] ?? "",
+      pincode: json['pincode'] ?? "",
+      receiverName: json['receiverName'] ?? "",
+      receiverPhone: json['receiverPhone'] ?? "",
+      countryCode: json['countryCode'] ?? "+91",
+      isDefault: json['isDefault'] ?? false,
+    );
+  }
+}
 
 class AddressBookPage extends StatefulWidget {
-  const AddressBookPage({super.key});
+  final String token;
+  const AddressBookPage({super.key, required this.token});
 
   @override
   State<AddressBookPage> createState() => _AddressBookPageState();
@@ -17,188 +57,52 @@ class _AddressBookPageState extends State<AddressBookPage> {
   @override
   void initState() {
     super.initState();
-    loadAddresses();
+    fetchAddresses();
   }
 
-  Future<void> loadAddresses() async {
-    final prefs = await SharedPreferences.getInstance();
-    final data = prefs.getString('addresses');
+  Future<void> fetchAddresses() async {
+    final response = await http.get(
+      Uri.parse('http://192.168.100.162:8080/api/v1/customers/addresses'),
+      headers: {'Authorization': 'Bearer ${widget.token}'},
+    );
 
-    if (data != null) {
-      final List decoded = jsonDecode(data);
-      addressList =
-          decoded.map((e) => AddressModel.fromJson(e)).toList();
-    }
-
-    setState(() {});
-  }
-
-  Future<void> saveAddresses() async {
-    final prefs = await SharedPreferences.getInstance();
-    final encoded =
-    jsonEncode(addressList.map((e) => e.toJson()).toList());
-    await prefs.setString('addresses', encoded);
-  }
-
-  // ADD OR EDIT ADDRESS
-  void addOrEditAddress(AddressModel address, {int? index}) async {
-    if (index == null) {
-      if (addressList.isEmpty) {
-        address.isDefault = true;
-      }
-      addressList.add(address);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as List;
+      setState(() {
+        addressList = data.map((e) => AddressModel.fromJson(e)).toList();
+      });
     } else {
-      address.isDefault = addressList[index].isDefault;
-      addressList[index] = address;
+      print("Error fetching addresses: ${response.statusCode}");
     }
-
-    await saveAddresses();
-    setState(() {});
   }
 
-  // DELETE ADDRESS
-  void deleteAddress(int index) async {
-    bool wasDefault = addressList[index].isDefault;
-
-    addressList.removeAt(index);
-
-    if (wasDefault && addressList.isNotEmpty) {
-      addressList[0].isDefault = true;
-    }
-
-    await saveAddresses();
-    setState(() {});
-
-    // ✅ Show Snackbar
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Address deleted successfully"),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
-
-  // ✅ CONFIRM DELETE DIALOG
-  Future<void> confirmDelete(int index) async {
-    bool? result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Delete Address"),
-        content: const Text(
-          "Are you sure you want to delete this address?\n\nThis action cannot be undone.",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("No"),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              "Yes",
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
+  Future<void> deleteAddress(int id) async {
+    final response = await http.delete(
+      Uri.parse('http://192.168.100.162:8080/api/v1/customers/addresses/$id'),
+      headers: {'Authorization': 'Bearer ${widget.token}'},
     );
 
-    if (result == true) {
-      deleteAddress(index);
+    if (response.statusCode == 204) {
+      fetchAddresses();
+    } else {
+      print("Error deleting address: ${response.statusCode}");
     }
-  }
-
-  // ✅ SET DEFAULT
-  Future<void> setDefault(int index) async {
-    for (int i = 0; i < addressList.length; i++) {
-      addressList[i].isDefault = false;
-    }
-
-    addressList[index].isDefault = true;
-
-    await saveAddresses();
-    setState(() {});
-  }
-
-  void openForm({AddressModel? address, int? index}) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => AddAddressForm(
-        existingAddress: address,
-        onSave: (newAddress) =>
-            addOrEditAddress(newAddress, index: index),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Address Book"),
-        backgroundColor: Colors.red,
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.red,
-        onPressed: () => openForm(),
-        child: const Icon(Icons.add),
-      ),
-      body: addressList.isEmpty
-          ? const Center(child: Text("No addresses added yet"))
-          : ListView.builder(
+      appBar: AppBar(title: const Text("Address Book"), backgroundColor: Colors.red),
+      body: ListView.builder(
         itemCount: addressList.length,
         itemBuilder: (context, index) {
           final address = addressList[index];
-
-          return Card(
-            margin: const EdgeInsets.symmetric(
-                horizontal: 15, vertical: 8),
-            child: ListTile(
-              leading: Icon(
-                Icons.location_on,
-                color: address.isDefault
-                    ? Colors.green
-                    : Colors.red,
-              ),
-              title: Text(
-                  "${address.houseNo}, ${address.area}"),
-              subtitle: Text(
-                  "${address.city}, ${address.state} - ${address.pincode}\n"
-                      "Receiver: ${address.receiverName}\n"
-                      "Phone: ${address.countryCode} ${address.receiverPhone}"),
-              isThreeLine: true,
-
-              onTap: () async {
-                await setDefault(index);
-
-                String fullAddress =
-                    "${address.houseNo}, ${address.area}, "
-                    "${address.city}, ${address.state} - ${address.pincode}\n"
-                    "Receiver: ${address.receiverName}\n"
-                    "Phone: ${address.countryCode} ${address.receiverPhone}";
-
-                Navigator.pop(context, fullAddress);
-              },
-
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit,
-                        color: Colors.blue),
-                    onPressed: () => openForm(
-                        address: address, index: index),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete,
-                        color: Colors.red),
-                    onPressed: () =>
-                        confirmDelete(index), // ✅ Updated
-                  ),
-                ],
-              ),
+          return ListTile(
+            title: Text("${address.houseNo}, ${address.area}, ${address.city}"),
+            subtitle: Text("${address.state} - ${address.pincode}\nReceiver: ${address.receiverName}\nPhone: ${address.countryCode} ${address.receiverPhone}"),
+            trailing: IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () => deleteAddress(address.id),
             ),
           );
         },

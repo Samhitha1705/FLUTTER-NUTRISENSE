@@ -5,14 +5,14 @@ import 'address_book_page.dart';
 import 'payment_gateway.dart';
 
 class CartPage extends StatefulWidget {
-  const CartPage({super.key});
+  final String token; // ✅ Required token
+  const CartPage({super.key, required this.token});
 
   @override
   State<CartPage> createState() => _CartPageState();
 }
 
 class _CartPageState extends State<CartPage> {
-
   String? selectedAddress;
 
   double get totalPrice {
@@ -35,10 +35,7 @@ class _CartPageState extends State<CartPage> {
         globalCart[index].quantity--;
       } else {
         globalCart.removeAt(index);
-
-        if (globalCart.isEmpty) {
-          Navigator.pop(context);
-        }
+        if (globalCart.isEmpty) Navigator.pop(context);
       }
     });
   }
@@ -46,25 +43,19 @@ class _CartPageState extends State<CartPage> {
   void removeItem(int index) {
     setState(() {
       globalCart.removeAt(index);
-
-      if (globalCart.isEmpty) {
-        Navigator.pop(context);
-      }
+      if (globalCart.isEmpty) Navigator.pop(context);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(title: const Text("Your Cart")),
-
       body: globalCart.isEmpty
           ? const Center(child: Text("Cart is Empty"))
           : Column(
         children: [
-
-          /// ADDRESS SECTION
+          /// ADDRESS SELECTION
           Card(
             margin: const EdgeInsets.all(10),
             child: ListTile(
@@ -74,10 +65,11 @@ class _CartPageState extends State<CartPage> {
               ),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () async {
+                // ✅ Pass token to AddressBookPage
                 final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const AddressBookPage(),
+                    builder: (_) => AddressBookPage(token: widget.token),
                   ),
                 );
 
@@ -96,13 +88,10 @@ class _CartPageState extends State<CartPage> {
               itemCount: globalCart.length,
               itemBuilder: (context, index) {
                 final item = globalCart[index];
-
                 return Card(
-                  margin: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 6),
+                  margin:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   child: ListTile(
-                    contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 10),
                     leading: Image.network(
                       item.image,
                       width: 60,
@@ -111,34 +100,26 @@ class _CartPageState extends State<CartPage> {
                     ),
                     title: Text(item.title),
                     subtitle: Text(
-                      "₹${item.price}  x  ${item.quantity}",
+                      "₹${item.price} x ${item.quantity}",
                       style: const TextStyle(color: Colors.grey),
                     ),
-
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-
                         IconButton(
                           onPressed: () => decreaseQty(index),
                           icon: const Icon(Icons.remove),
                         ),
-
-                        Text(
-                          item.quantity.toString(),
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold),
-                        ),
-
+                        Text(item.quantity.toString(),
+                            style:
+                            const TextStyle(fontWeight: FontWeight.bold)),
                         IconButton(
                           onPressed: () => increaseQty(index),
                           icon: const Icon(Icons.add),
                         ),
-
                         IconButton(
                           onPressed: () => removeItem(index),
-                          icon: const Icon(Icons.delete,
-                              color: Colors.red),
+                          icon: const Icon(Icons.delete, color: Colors.red),
                         ),
                       ],
                     ),
@@ -153,42 +134,26 @@ class _CartPageState extends State<CartPage> {
             padding: const EdgeInsets.all(15),
             decoration: const BoxDecoration(
               color: Colors.white,
-              boxShadow: [
-                BoxShadow(color: Colors.grey, blurRadius: 5)
-              ],
+              boxShadow: [BoxShadow(color: Colors.grey, blurRadius: 5)],
             ),
             child: SafeArea(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-
                   Row(
-                    mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("Total",
-                          style: TextStyle(fontSize: 18)),
+                      const Text("Total", style: TextStyle(fontSize: 18)),
                       Text(
                         "₹${totalPrice.toStringAsFixed(2)}",
                         style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold),
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 10),
 
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white, // ✅ White text
-                      minimumSize:
-                      const Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
                     onPressed: selectedAddress == null
                         ? null
                         : () {
@@ -200,18 +165,23 @@ class _CartPageState extends State<CartPage> {
                             image: globalCart.isNotEmpty
                                 ? globalCart.first.image
                                 : "",
-                            orderItemCost:
-                            totalPrice.toString(),
-                            category: "Cart",
+                            orderItemCost: totalPrice.toString(),
+                            category: "Cart", token: '',
                           ),
                         ),
                       );
                     },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
                     child: const Text(
                       "Place Order",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   )
                 ],

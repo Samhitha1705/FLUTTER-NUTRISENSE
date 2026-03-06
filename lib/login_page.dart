@@ -15,21 +15,17 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
   bool isPasswordVisible = false;
   bool isLoading = false;
-
   String? selectedRole;
 
   Future<void> loginUser() async {
-
     if (emailController.text.isEmpty ||
         passwordController.text.isEmpty ||
         selectedRole == null) {
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please enter email, password and role")),
       );
@@ -41,31 +37,31 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-
       Uri url;
 
-      /// CUSTOMER LOGIN API
+      /// API URL based on role
       if (selectedRole == "Customer") {
         url = Uri.parse("http://192.168.100.162:8080/api/v1/customers/login");
+      } else {
+        url =
+            Uri.parse("http://192.168.100.162:8080/api/v1/nutritionists/login");
       }
 
-      /// NUTRITIONIST LOGIN API
-      else {
-        url = Uri.parse("http://192.168.100.162:8080/api/v1/nutritionists/login");
-      }
+      final requestBody = {
+        "email": emailController.text.trim(),
+        "passwordHash": passwordController.text.trim(),
+      };
+
+      print("Request URL: $url");
+      print("Request Body: $requestBody");
 
       final response = await http.post(
         url,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: jsonEncode({
-          "email": emailController.text.trim(),
-          "passwordHash": passwordController.text.trim(),
-        }),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(requestBody),
       );
 
-      print("Status Code: ${response.statusCode}");
+      print("Response Status: ${response.statusCode}");
       print("Response Body: ${response.body}");
 
       setState(() {
@@ -73,33 +69,46 @@ class _LoginPageState extends State<LoginPage> {
       });
 
       if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
 
-        /// CUSTOMER DASHBOARD
+        print(body);
+
+        /// ✅ Handle token for both APIs
+        final token =
+            body["token"] ??
+                body["accessToken"] ??
+                body["data"]?["token"] ??
+                body["data"]?["accessToken"] ??
+                "";
+
+        if (token.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Token not received")),
+          );
+          return;
+        }
+
+        print("TOKEN: $token");
+
+        /// Navigate based on role
         if (selectedRole == "Customer") {
-
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(
-              builder: (_) => const StatefulDashboard(),
+              builder: (_) => StatefulDashboard(token: token),
+            ),
+                (route) => false,
+          );
+        } else {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (_) => NutritionistDashboard(token: token),
             ),
                 (route) => false,
           );
         }
-
-        /// NUTRITIONIST DASHBOARD
-        else {
-
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const NutritionistDashboard(),
-            ),
-                (route) => false,
-          );
-        }
-
       } else {
-
         String message = "Login failed";
 
         try {
@@ -111,9 +120,7 @@ class _LoginPageState extends State<LoginPage> {
           SnackBar(content: Text(message)),
         );
       }
-
     } catch (e) {
-
       setState(() {
         isLoading = false;
       });
@@ -126,29 +133,22 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       body: Stack(
         children: [
-
           SizedBox.expand(
             child: Image.asset(
               "assets/images/food_bg.jpg",
               fit: BoxFit.cover,
             ),
           ),
-
           Container(color: Colors.black.withOpacity(0.4)),
-
           Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-
                 children: [
-
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
@@ -160,9 +160,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 5),
-
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
@@ -173,20 +171,16 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 25),
 
                   Container(
                     padding: const EdgeInsets.all(20),
-
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
                     ),
-
                     child: Column(
                       children: [
-
                         /// EMAIL
                         TextField(
                           controller: emailController,
@@ -202,18 +196,15 @@ class _LoginPageState extends State<LoginPage> {
                         TextField(
                           controller: passwordController,
                           obscureText: !isPasswordVisible,
-
                           decoration: InputDecoration(
                             hintText: "Password",
                             border: const UnderlineInputBorder(),
-
                             suffixIcon: IconButton(
                               icon: Icon(
                                 isPasswordVisible
                                     ? Icons.visibility
                                     : Icons.visibility_off,
                               ),
-
                               onPressed: () {
                                 setState(() {
                                   isPasswordVisible = !isPasswordVisible;
@@ -228,25 +219,18 @@ class _LoginPageState extends State<LoginPage> {
                         /// ROLE DROPDOWN
                         DropdownButtonFormField<String>(
                           value: selectedRole,
-
-                          decoration: const InputDecoration(
-                            hintText: "Login as",
-                          ),
-
+                          decoration:
+                          const InputDecoration(hintText: "Login as"),
                           items: const [
-
                             DropdownMenuItem(
                               value: "Customer",
                               child: Text("Customer"),
                             ),
-
                             DropdownMenuItem(
                               value: "Nutritionist",
                               child: Text("Nutritionist"),
                             ),
-
                           ],
-
                           onChanged: (value) {
                             setState(() {
                               selectedRole = value;
@@ -254,13 +238,10 @@ class _LoginPageState extends State<LoginPage> {
                           },
                         ),
 
-                        /// FORGOT PASSWORD
                         Align(
                           alignment: Alignment.centerRight,
-
                           child: TextButton(
                             onPressed: () {
-
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -268,9 +249,7 @@ class _LoginPageState extends State<LoginPage> {
                                   const ForgotPasswordEmailPage(),
                                 ),
                               );
-
                             },
-
                             child: const Text(
                               "Forgot Password?",
                               style: TextStyle(
@@ -287,18 +266,14 @@ class _LoginPageState extends State<LoginPage> {
                         SizedBox(
                           width: double.infinity,
                           height: 45,
-
                           child: ElevatedButton(
-
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.red,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-
                             onPressed: isLoading ? null : loginUser,
-
                             child: isLoading
                                 ? const CircularProgressIndicator(
                               color: Colors.white,
@@ -318,22 +293,18 @@ class _LoginPageState extends State<LoginPage> {
                         /// CREATE ACCOUNT
                         TextButton(
                           onPressed: () {
-
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => const Registrationpage(),
                               ),
                             );
-
                           },
-
                           child: const Text(
                             "Create an account",
                             style: TextStyle(color: Colors.red),
                           ),
                         ),
-
                       ],
                     ),
                   )

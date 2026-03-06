@@ -4,52 +4,67 @@ import 'payment_gateway.dart';
 import 'my_orders.dart';
 import 'registrationPage.dart';
 import 'statefull.dart';
+import 'expandWidget.dart';
 import 'main.dart';
+import 'address_book_page.dart';
 
 Route<dynamic> onGenerateRoute(RouteSettings settings) {
-  switch (settings.name) {
+  final args = settings.arguments as Map<String, dynamic>?;
 
+  switch (settings.name) {
     case "/":
-      return MaterialPageRoute(
-        builder: (_) => const SplashScreen(),
-      );
+      return MaterialPageRoute(builder: (_) => const SplashScreen());
 
     case "/dashboard":
       return MaterialPageRoute(
-        builder: (_) => const StatefulDashboard(),
+        builder: (_) => StatefulDashboard(
+          token: args?["token"] ?? "",
+        ),
       );
 
     case "/register":
-      return MaterialPageRoute(
-        builder: (_) => const Registrationpage(),
-      );
+      return MaterialPageRoute(builder: (_) => const Registrationpage());
 
     case "/aboutFood":
-      final args = settings.arguments as Map<String, dynamic>;
       return MaterialPageRoute(
         builder: (_) => Aboutfood(
-          title: args["title"],
-          image: args["image"],
-          description: args["description"],
-          price: args["price"],
-          category: args["category"],
+          title: args?["title"] ?? "",
+          image: args?["image"] ?? "",
+          description: args?["description"] ?? "",
+          price: args?["price"] ?? "",
+          category: args?["category"] ?? "", token: '',
         ),
       );
 
     case "/payment":
-      final args = settings.arguments as Map<String, dynamic>;
       return MaterialPageRoute(
         builder: (_) => PaymentGateway(
-          title: args["title"],
-          image: args["image"],
-          orderItemCost: args["price"],
-          category: args["category"],
+          title: args?["title"] ?? "",
+          image: args?["image"] ?? "",
+          orderItemCost: args?["price"] ?? "",
+          category: args?["category"] ?? "", token: '',
         ),
       );
 
     case "/orders":
       return MaterialPageRoute(
-        builder: (_) => const MyOrdersPage(),
+        builder: (_) => MyOrdersPage(
+          token: args?["token"] ?? "",
+        ),
+      );
+
+    case "/addressBook":
+      return MaterialPageRoute(
+        builder: (_) => AddressBookPage(
+          token: args?["token"] ?? "",
+        ),
+      );
+
+    case "/profile":
+      return MaterialPageRoute(
+        builder: (_) => ExpandWidget(
+          token: args?["token"] ?? "",
+        ),
       );
 
     default:

@@ -29,7 +29,6 @@ class _AddAddressFormState extends State<AddAddressForm> {
   @override
   void initState() {
     super.initState();
-
     if (widget.existingAddress != null) {
       houseController.text = widget.existingAddress!.houseNo;
       areaController.text = widget.existingAddress!.area;
@@ -44,6 +43,7 @@ class _AddAddressFormState extends State<AddAddressForm> {
 
   void save() {
     final address = AddressModel(
+      id: widget.existingAddress?.id,
       houseNo: houseController.text,
       area: areaController.text,
       city: cityController.text,
@@ -72,43 +72,15 @@ class _AddAddressFormState extends State<AddAddressForm> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              "Add Address",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            const Text("Add Address", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 15),
-
-            TextField(
-              controller: houseController,
-              decoration: const InputDecoration(labelText: "House No"),
-            ),
-            TextField(
-              controller: areaController,
-              decoration: const InputDecoration(labelText: "Area"),
-            ),
-            TextField(
-              controller: cityController,
-              decoration: const InputDecoration(labelText: "City"),
-            ),
-            TextField(
-              controller: stateController,
-              decoration: const InputDecoration(labelText: "State"),
-            ),
-            TextField(
-              controller: pincodeController,
-              decoration: const InputDecoration(labelText: "Pincode"),
-            ),
-
+            TextField(controller: houseController, decoration: const InputDecoration(labelText: "House No")),
+            TextField(controller: areaController, decoration: const InputDecoration(labelText: "Area")),
+            TextField(controller: cityController, decoration: const InputDecoration(labelText: "City")),
+            TextField(controller: stateController, decoration: const InputDecoration(labelText: "State")),
+            TextField(controller: pincodeController, decoration: const InputDecoration(labelText: "Pincode")),
             const SizedBox(height: 10),
-
-            TextField(
-              controller: receiverController,
-              decoration: const InputDecoration(labelText: "Receiver Name"),
-            ),
-
+            TextField(controller: receiverController, decoration: const InputDecoration(labelText: "Receiver Name")),
             Row(
               children: [
                 DropdownButton<String>(
@@ -118,11 +90,7 @@ class _AddAddressFormState extends State<AddAddressForm> {
                     DropdownMenuItem(value: "+1", child: Text("+1")),
                     DropdownMenuItem(value: "+44", child: Text("+44")),
                   ],
-                  onChanged: (value) {
-                    setState(() {
-                      countryCode = value!;
-                    });
-                  },
+                  onChanged: (value) => setState(() => countryCode = value!),
                 ),
                 Expanded(
                   child: TextField(
@@ -133,23 +101,12 @@ class _AddAddressFormState extends State<AddAddressForm> {
                 ),
               ],
             ),
-
             const SizedBox(height: 20),
-
             ElevatedButton(
               onPressed: save,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-              ),
-              child: const Text(
-                "Save Address",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text("Save Address", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
-
             const SizedBox(height: 20),
           ],
         ),

@@ -45,7 +45,7 @@ class _PlansScreenState extends State<PlansScreen> {
             title: "$newPlan Subscription",
             image: "",
             orderItemCost: prices[newPlan]!,
-            category: "Subscription",
+            category: "Subscription", token: '',
           ),
         ),
       ).then((success) async {

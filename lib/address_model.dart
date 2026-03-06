@@ -1,4 +1,5 @@
 class AddressModel {
+  int? id; // backend ID
   String houseNo;
   String area;
   String city;
@@ -10,6 +11,7 @@ class AddressModel {
   bool isDefault;
 
   AddressModel({
+    this.id,
     required this.houseNo,
     required this.area,
     required this.city,
@@ -17,12 +19,13 @@ class AddressModel {
     required this.pincode,
     required this.receiverName,
     required this.receiverPhone,
-    required this.countryCode,
+    this.countryCode = "+91",
     this.isDefault = false,
   });
 
   Map<String, dynamic> toJson() {
     return {
+      if (id != null) "id": id,
       "houseNo": houseNo,
       "area": area,
       "city": city,
@@ -37,6 +40,7 @@ class AddressModel {
 
   factory AddressModel.fromJson(Map<String, dynamic> json) {
     return AddressModel(
+      id: json["id"],
       houseNo: json["houseNo"] ?? "",
       area: json["area"] ?? "",
       city: json["city"] ?? "",
@@ -45,7 +49,7 @@ class AddressModel {
       receiverName: json["receiverName"] ?? "",
       receiverPhone: json["receiverPhone"] ?? "",
       countryCode: json["countryCode"] ?? "+91",
-      isDefault: json["isDefault"] ?? false, // ✅ FIXED HERE
+      isDefault: json["isDefault"] ?? false,
     );
   }
 }

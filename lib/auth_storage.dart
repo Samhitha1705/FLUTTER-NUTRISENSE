@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthStorage {
-  static const String baseUrl = "http://10.0.2.2:8080/api/v1/customers";
+  static const String baseUrl = "http://192.168.100.162:8080/api/v1/customers";
 
   // Login API
   static Future<bool> login(String email, String password) async {
@@ -20,12 +20,14 @@ class AuthStorage {
         final data = jsonDecode(response.body);
 
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString("token", data["token"] ?? "");
+        await prefs.setString("token", data["accessToken"] ?? "");
+        print("token stored successfully");
         await prefs.setBool("isLoggedIn", true);
 
         // Save user data if available
         if (data.containsKey('user')) {
           await saveUser(data['user']);
+          print("user saved");
         }
 
         return true;

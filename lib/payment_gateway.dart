@@ -9,6 +9,7 @@ class PaymentGateway extends StatefulWidget {
   final String image;
   final String orderItemCost;
   final String category; // "Subscription" OR "Food"
+  final String token; // ✅ add token
 
   const PaymentGateway({
     super.key,
@@ -16,6 +17,7 @@ class PaymentGateway extends StatefulWidget {
     required this.image,
     required this.orderItemCost,
     required this.category,
+    required this.token, // ✅ required
   });
 
   @override
@@ -55,16 +57,12 @@ class _PaymentGatewayState extends State<PaymentGateway> {
   }
 
   // ================= SUCCESS =================
-
   void _handleSuccess(PaymentSuccessResponse response) {
-
-    // 🔥 If Subscription → Return TRUE
     if (widget.category == "Subscription") {
       Navigator.pop(context, true);
       return;
     }
 
-    // 🔥 If Food Order → Normal Flow
     OrderModel newOrder = OrderModel(
       title: widget.title,
       image: widget.image,
@@ -91,21 +89,18 @@ class _PaymentGatewayState extends State<PaymentGateway> {
 
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const MyOrdersPage()),
+      MaterialPageRoute(
+          builder: (_) => MyOrdersPage(token: widget.token)), // ✅ pass token
     );
   }
 
   // ================= ERROR =================
-
   void _handleError(PaymentFailureResponse response) {
-
-    // 🔥 If Subscription → Return FALSE
     if (widget.category == "Subscription") {
       Navigator.pop(context, false);
       return;
     }
 
-    // 🔥 If Food Order → Save Failed Order
     globalOrders.insert(
       0,
       OrderModel(
@@ -120,7 +115,8 @@ class _PaymentGatewayState extends State<PaymentGateway> {
 
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const MyOrdersPage()),
+      MaterialPageRoute(
+          builder: (_) => MyOrdersPage(token: widget.token)), // ✅ pass token
     );
   }
 

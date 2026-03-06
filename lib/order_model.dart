@@ -4,7 +4,7 @@ class OrderModel {
   final double price;
   final String category;
   final DateTime time;
-  String status;   // 🔥 remove final to allow status update
+  String status;   // mutable to allow updates
 
   OrderModel({
     required this.title,
