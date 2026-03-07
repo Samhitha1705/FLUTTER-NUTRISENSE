@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'otp_verification_page.dart';
 
 class Registrationpage extends StatefulWidget {
@@ -11,39 +12,54 @@ class Registrationpage extends StatefulWidget {
 }
 
 class _RegistrationpageState extends State<Registrationpage> {
-
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final emailController = TextEditingController();
   final phoneController = TextEditingController();
   final passwordController = TextEditingController();
-
   final qualificationController = TextEditingController();
   final specializationController = TextEditingController();
 
   bool visiblePassword = true;
   bool isLoading = false;
-
   String? selectedRole;
 
   bool isValidPassword(String password) {
-    final regex = RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!]).{8,}$');
+    final regex = RegExp(
+        r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!]).{8,}$');
     return regex.hasMatch(password);
   }
 
   Future<void> registerUser() async {
-
     if (firstNameController.text.isEmpty ||
         lastNameController.text.isEmpty ||
         emailController.text.isEmpty ||
-        passwordController.text.isEmpty ||
         phoneController.text.isEmpty ||
+        passwordController.text.isEmpty ||
         selectedRole == null) {
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please fill all required fields")),
       );
       return;
+    }
+
+    if (!isValidPassword(passwordController.text)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                "Password must contain uppercase, lowercase, number and special character")),
+      );
+      return;
+    }
+
+    if (selectedRole == "Nutritionist") {
+      if (qualificationController.text.isEmpty ||
+          specializationController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Enter qualification and specialization")),
+        );
+        return;
+      }
     }
 
     setState(() {
@@ -51,33 +67,28 @@ class _RegistrationpageState extends State<Registrationpage> {
     });
 
     try {
-
       Uri url;
       Map<String, dynamic> body;
 
       if (selectedRole == "Customer") {
-
         url = Uri.parse("http://192.168.100.162:8080/api/v1/customers");
-
         body = {
-          "email": emailController.text,
-          "passwordHash": passwordController.text,
-          "firstName": firstNameController.text,
-          "lastName": lastNameController.text,
-          "phone": phoneController.text
+          "email": emailController.text.trim(),
+          "passwordHash": passwordController.text.trim(),
+          "firstName": firstNameController.text.trim(),
+          "lastName": lastNameController.text.trim(),
+          "phone": phoneController.text.trim()
         };
       } else {
-
         url = Uri.parse("http://192.168.100.162:8080/api/v1/nutritionists");
-
         body = {
-          "email": emailController.text,
-          "password": passwordController.text,
-          "firstName": firstNameController.text,
-          "lastName": lastNameController.text,
-          "phone": phoneController.text,
-          "qualification": qualificationController.text,
-          "specialization": specializationController.text
+          "email": emailController.text.trim(),
+          "passwordHash": passwordController.text.trim(),
+          "firstName": firstNameController.text.trim(),
+          "lastName": lastNameController.text.trim(),
+          "phone": phoneController.text.trim(),
+          "qualification": qualificationController.text.trim(),
+          "specialization": specializationController.text.trim()
         };
       }
 
@@ -87,54 +98,59 @@ class _RegistrationpageState extends State<Registrationpage> {
         body: jsonEncode(body),
       );
 
-      print(response.statusCode);
-      print(response.body);
+      print("STATUS: ${response.statusCode}");
+      print("BODY: ${response.body}");
 
       if (response.statusCode == 200 ||
           response.statusCode == 201 ||
           response.statusCode == 202) {
+        // Save user info locally
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString("name", firstNameController.text.trim());
+        await prefs.setString("lastName", lastNameController.text.trim());
+        await prefs.setString("email", emailController.text.trim());
+        await prefs.setString("phone", phoneController.text.trim());
 
+        // Save token if returned
+        try {
+          final data = jsonDecode(response.body);
+          if (data['token'] != null) {
+            await prefs.setString("token", data['token']);
+          }
+        } catch (_) {}
+
+        // Navigate to OTP verification
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => OtpVerificationPage(
-              email: emailController.text,
-              password: passwordController.text,
-              firstName: firstNameController.text,
-              lastName: lastNameController.text,
-              phone: phoneController.text,
+              email: emailController.text.trim(),
+              password: passwordController.text.trim(),
+              firstName: firstNameController.text.trim(),
+              lastName: lastNameController.text.trim(),
+              phone: phoneController.text.trim(),
               role: selectedRole!,
             ),
           ),
         );
-
       } else {
-
         String errorMessage = "Registration failed";
-
         try {
-
           final data = jsonDecode(response.body);
-
           if (data["message"] != null) {
             errorMessage = data["message"];
           }
-
         } catch (e) {
           errorMessage = response.body;
         }
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage)),
         );
       }
-
     } catch (e) {
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Network error: $e")),
       );
-
     }
 
     setState(() {
@@ -144,29 +160,22 @@ class _RegistrationpageState extends State<Registrationpage> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       body: Stack(
         children: [
-
           SizedBox.expand(
             child: Image.asset(
               "assets/images/food_bg.jpg",
               fit: BoxFit.cover,
             ),
           ),
-
           Container(color: Colors.black.withOpacity(0.6)),
-
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-
               child: Column(
                 children: [
-
                   const SizedBox(height: 80),
-
                   const Text(
                     "Create Account",
                     style: TextStyle(
@@ -174,51 +183,42 @@ class _RegistrationpageState extends State<Registrationpage> {
                         fontWeight: FontWeight.bold,
                         color: Colors.white),
                   ),
-
                   const SizedBox(height: 40),
-
                   Container(
                     padding: const EdgeInsets.all(20),
-
                     decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.95),
                         borderRadius: BorderRadius.circular(20)),
-
                     child: Column(
                       children: [
-
                         TextField(
                           controller: firstNameController,
-                          decoration: const InputDecoration(labelText: "First Name"),
+                          decoration:
+                          const InputDecoration(labelText: "First Name"),
                         ),
-
                         const SizedBox(height: 15),
-
                         TextField(
                           controller: lastNameController,
-                          decoration: const InputDecoration(labelText: "Last Name"),
+                          decoration:
+                          const InputDecoration(labelText: "Last Name"),
                         ),
-
                         const SizedBox(height: 15),
-
                         TextField(
                           controller: emailController,
-                          decoration: const InputDecoration(labelText: "Email"),
+                          decoration:
+                          const InputDecoration(labelText: "Email"),
                         ),
-
                         const SizedBox(height: 15),
-
                         TextField(
                           controller: phoneController,
-                          decoration: const InputDecoration(labelText: "Phone"),
+                          decoration:
+                          const InputDecoration(labelText: "Phone"),
                         ),
-
                         const SizedBox(height: 15),
-
                         DropdownButtonFormField<String>(
                           value: selectedRole,
-                          decoration: const InputDecoration(labelText: "I am a"),
-
+                          decoration:
+                          const InputDecoration(labelText: "I am a"),
                           items: const [
                             DropdownMenuItem(
                               value: "Customer",
@@ -229,46 +229,36 @@ class _RegistrationpageState extends State<Registrationpage> {
                               child: Text("Nutritionist"),
                             ),
                           ],
-
                           onChanged: (value) {
                             setState(() {
                               selectedRole = value;
                             });
                           },
                         ),
-
                         if (selectedRole == "Nutritionist") ...[
-
                           const SizedBox(height: 15),
-
                           TextField(
                             controller: qualificationController,
-                            decoration: const InputDecoration(labelText: "Qualification"),
+                            decoration: const InputDecoration(
+                                labelText: "Qualification"),
                           ),
-
                           const SizedBox(height: 15),
-
                           TextField(
                             controller: specializationController,
-                            decoration: const InputDecoration(labelText: "Specialization"),
+                            decoration: const InputDecoration(
+                                labelText: "Specialization"),
                           ),
                         ],
-
                         const SizedBox(height: 15),
-
                         TextField(
                           controller: passwordController,
                           obscureText: visiblePassword,
-
                           decoration: InputDecoration(
                             labelText: "Password",
-
                             suffixIcon: IconButton(
-                              icon: Icon(
-                                  visiblePassword
-                                      ? Icons.visibility
-                                      : Icons.visibility_off),
-
+                              icon: Icon(visiblePassword
+                                  ? Icons.visibility
+                                  : Icons.visibility_off),
                               onPressed: () {
                                 setState(() {
                                   visiblePassword = !visiblePassword;
@@ -277,42 +267,33 @@ class _RegistrationpageState extends State<Registrationpage> {
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 30),
-
                         SizedBox(
                           width: double.infinity,
                           height: 50,
-
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFE23744),
                             ),
-
                             onPressed: isLoading ? null : registerUser,
-
                             child: isLoading
-                                ? const CircularProgressIndicator(color: Colors.white)
+                                ? const CircularProgressIndicator(
+                                color: Colors.white)
                                 : const Text(
                               "Register",
                               style: TextStyle(color: Colors.white),
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 15),
-
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-
                             const Text("Already have an account? "),
-
                             GestureDetector(
                               onTap: () {
                                 Navigator.pop(context);
                               },
-
                               child: const Text(
                                 "Login",
                                 style: TextStyle(
@@ -320,7 +301,6 @@ class _RegistrationpageState extends State<Registrationpage> {
                                     fontWeight: FontWeight.bold),
                               ),
                             )
-
                           ],
                         )
                       ],

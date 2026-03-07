@@ -38,9 +38,18 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
 
   Future<void> verifyOtp() async {
 
-    if (otpController.text.trim().isEmpty) {
+    String otp = otpController.text.trim();
+
+    if (otp.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Enter OTP")),
+      );
+      return;
+    }
+
+    if (otp.length != 6 || !RegExp(r'^[0-9]{6}$').hasMatch(otp)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("OTP must be exactly 6 digits")),
       );
       return;
     }
@@ -66,7 +75,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
         },
         body: jsonEncode({
           "email": widget.email,
-          "otp": otpController.text.trim(),
+          "otp": otp,
         }),
       );
 
@@ -263,6 +272,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                         TextField(
                           controller: otpController,
                           keyboardType: TextInputType.number,
+                          maxLength: 6,
 
                           decoration: const InputDecoration(
                             labelText: "Enter OTP",

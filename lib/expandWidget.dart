@@ -1,18 +1,15 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 import 'edit_profile.dart';
 import 'my_orders.dart';
 import 'address_book_page.dart';
 import 'reviews_page.dart';
-
-// ✅ Your Existing Medical Pages
-import 'medical_conditions_page.dart';
-import 'allergies_page.dart';
-import 'lifestyle_page.dart';
-import 'goals_page.dart';
 
 class ExpandWidget extends StatefulWidget {
   const ExpandWidget({super.key});
@@ -25,13 +22,13 @@ class _ExpandWidgetState extends State<ExpandWidget> {
   String name = "";
   String email = "";
   String phone = "";
-  String? imagePath;
-  String gender = "Other";
-  DateTime? dob;
+  String? imagePath; // Local path or backend URL
 
   bool vegMode = false;
   bool personalizedRatings = true;
   bool darkMode = false;
+
+  final String baseUrl = 'http://192.168.100.162:8080'; // Replace with your backend URL
 
   @override
   void initState() {
@@ -39,22 +36,49 @@ class _ExpandWidgetState extends State<ExpandWidget> {
     loadProfile();
   }
 
+  /// Load profile from backend or cache
   Future loadProfile() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      name = prefs.getString("name") ?? "";
-      email = prefs.getString("email") ?? "";
-      phone = prefs.getString("phone") ?? "";
-      imagePath = prefs.getString("imagePath");
-      gender = prefs.getString("gender") ?? "Other";
+    String? token = prefs.getString('token');
 
-      String? dobStr = prefs.getString("dob");
-      if (dobStr != null) dob = DateTime.tryParse(dobStr);
-    });
+    if (token != null) {
+      try {
+        final response = await http.get(
+          Uri.parse('$baseUrl/api/v1/customers/profile'),
+          headers: { 'Authorization': 'Bearer $token' },
+        );
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          setState(() {
+            name = data['firstName'] ?? '';
+            email = data['email'] ?? '';
+            phone = data['phone'] ?? '';
+            imagePath = data['imageUrl']; // Backend URL
+          });
+
+          // Cache locally
+          await prefs.setString('name', name);
+          await prefs.setString('email', email);
+          await prefs.setString('phone', phone);
+          if (imagePath != null) await prefs.setString('imagePath', imagePath!);
+        }
+      } catch (e) {
+        // Fallback to local cache if backend fails
+        setState(() {
+          name = prefs.getString('name') ?? '';
+          email = prefs.getString('email') ?? '';
+          phone = prefs.getString('phone') ?? '';
+          imagePath = prefs.getString('imagePath');
+        });
+      }
+    }
   }
 
+  /// Pick image and upload to backend
   Future pickImage() async {
     final prefs = await SharedPreferences.getInstance();
+    final picker = ImagePicker();
+
     showModalBottomSheet(
       context: context,
       builder: (_) => SafeArea(
@@ -65,11 +89,8 @@ class _ExpandWidgetState extends State<ExpandWidget> {
               title: const Text('Gallery'),
               onTap: () async {
                 Navigator.pop(context);
-                final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-                if (picked != null) {
-                  setState(() => imagePath = picked.path);
-                  await prefs.setString("imagePath", picked.path);
-                }
+                final picked = await picker.pickImage(source: ImageSource.gallery);
+                if (picked != null) await uploadImage(File(picked.path));
               },
             ),
             ListTile(
@@ -77,17 +98,39 @@ class _ExpandWidgetState extends State<ExpandWidget> {
               title: const Text('Camera'),
               onTap: () async {
                 Navigator.pop(context);
-                final picked = await ImagePicker().pickImage(source: ImageSource.camera);
-                if (picked != null) {
-                  setState(() => imagePath = picked.path);
-                  await prefs.setString("imagePath", picked.path);
-                }
+                final picked = await picker.pickImage(source: ImageSource.camera);
+                if (picked != null) await uploadImage(File(picked.path));
               },
             ),
           ],
         ),
       ),
     );
+  }
+
+  /// Upload image to backend
+  Future uploadImage(File file) async {
+    final prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+
+    if (token != null) {
+      final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/api/v1/customers/profile/image'));
+      request.headers['Authorization'] = 'Bearer $token';
+      request.files.add(await http.MultipartFile.fromPath('file', file.path));
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          imagePath = data['imageUrl'];
+        });
+        await prefs.setString('imagePath', imagePath!);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Image upload failed')));
+      }
+    }
   }
 
   @override
@@ -101,13 +144,14 @@ class _ExpandWidgetState extends State<ExpandWidget> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-
             /// 👤 PROFILE IMAGE
             GestureDetector(
               onTap: pickImage,
               child: CircleAvatar(
                 radius: 50,
-                backgroundImage: imagePath != null ? FileImage(File(imagePath!)) : null,
+                backgroundImage: imagePath != null
+                    ? (kIsWeb ? NetworkImage(imagePath!) : FileImage(File(imagePath!)) as ImageProvider)
+                    : null,
                 child: imagePath == null ? const Icon(Icons.person, size: 50) : null,
               ),
             ),
@@ -122,17 +166,6 @@ class _ExpandWidgetState extends State<ExpandWidget> {
             /// 📧 EMAIL
             Text(
               email.isEmpty ? "No Email" : email,
-              style: const TextStyle(color: Colors.grey),
-            ),
-
-            /// ⚧ GENDER
-            Text("Gender: $gender", style: const TextStyle(color: Colors.grey)),
-
-            /// 🎂 DOB
-            Text(
-              dob != null
-                  ? "DOB: ${dob!.day}/${dob!.month}/${dob!.year}"
-                  : "DOB: Not set",
               style: const TextStyle(color: Colors.grey),
             ),
 
@@ -152,61 +185,6 @@ class _ExpandWidgetState extends State<ExpandWidget> {
 
             const Divider(height: 30),
 
-            /// 🔹 MEDICAL INFORMATION SECTION (NEW)
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "Medical Information",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.medical_services_outlined),
-              title: const Text("Medical Conditions"),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const MedicalConditionsPage()),
-                );
-              },
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.warning_amber_outlined),
-              title: const Text("Allergies"),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AllergiesPage()),
-                );
-              },
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.self_improvement_outlined),
-              title: const Text("Lifestyle"),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LifestylePage()),
-                );
-              },
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.flag_outlined),
-              title: const Text("Health Goals"),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const GoalsPage()),
-                );
-              },
-            ),
-
-            const Divider(height: 30),
-
             /// 🔹 PREFERENCES
             const Align(
               alignment: Alignment.centerLeft,
@@ -219,25 +197,19 @@ class _ExpandWidgetState extends State<ExpandWidget> {
             SwitchListTile(
               title: const Text("Veg Mode"),
               value: vegMode,
-              onChanged: (val) {
-                setState(() => vegMode = val);
-              },
+              onChanged: (val) => setState(() => vegMode = val),
             ),
 
             SwitchListTile(
               title: const Text("Show Personalized Ratings"),
               value: personalizedRatings,
-              onChanged: (val) {
-                setState(() => personalizedRatings = val);
-              },
+              onChanged: (val) => setState(() => personalizedRatings = val),
             ),
 
             SwitchListTile(
               title: const Text("Dark Mode"),
               value: darkMode,
-              onChanged: (val) {
-                setState(() => darkMode = val);
-              },
+              onChanged: (val) => setState(() => darkMode = val),
             ),
 
             const Divider(height: 30),
@@ -254,34 +226,19 @@ class _ExpandWidgetState extends State<ExpandWidget> {
             ListTile(
               leading: const Icon(Icons.shopping_bag_outlined),
               title: const Text("Your Orders"),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const MyOrdersPage()),
-                );
-              },
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyOrdersPage())),
             ),
 
             ListTile(
               leading: const Icon(Icons.location_on_outlined),
               title: const Text("Address Book"),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AddressBookPage()),
-                );
-              },
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddressBookPage())),
             ),
 
             ListTile(
               leading: const Icon(Icons.rate_review_outlined),
               title: const Text("My Reviews"),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ReviewsPage()),
-                );
-              },
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReviewsPage())),
             ),
           ],
         ),

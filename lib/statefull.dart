@@ -41,15 +41,6 @@ class _StatefulDashboardState extends State<StatefulDashboard> {
   // Load profile info (name + image)
   Future loadDrawerProfile() async {
     final prefs = await SharedPreferences.getInstance();
-
-
-    Set<String> keys = prefs.getKeys();
-
-    for (String key in keys) {
-      print('$key : ${prefs.get(key)}');
-    }
-
-
     setState(() {
       userName = prefs.getString("name") ?? "User Name";
       userImage = prefs.getString("imagePath");
