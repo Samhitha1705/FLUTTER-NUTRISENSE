@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'aboutFood.dart';
-import 'payment_gateway.dart';
+import 'payment/payment_gateway.dart';
 import 'my_orders.dart';
 import 'registrationPage.dart';
 import 'statefull.dart';
@@ -8,7 +8,6 @@ import 'main.dart';
 
 Route<dynamic> onGenerateRoute(RouteSettings settings) {
   switch (settings.name) {
-
     case "/":
       return MaterialPageRoute(
         builder: (_) => const SplashScreen(),
@@ -39,11 +38,11 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
     case "/payment":
       final args = settings.arguments as Map<String, dynamic>;
       return MaterialPageRoute(
-        builder: (_) => PaymentGateway(
-          title: args["title"],
-          image: args["image"],
+        builder: (_) => razorPay(
+          // title: args["title"],
+          // image: args["image"],
           orderItemCost: args["price"],
-          category: args["category"],
+          // category: args["category"],
         ),
       );
 

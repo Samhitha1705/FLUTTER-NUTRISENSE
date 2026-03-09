@@ -11,7 +11,6 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-
   final TextEditingController goalController = TextEditingController();
   final TextEditingController healthHistoryController = TextEditingController();
   final TextEditingController heightController = TextEditingController();
@@ -30,7 +29,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   /// LOAD SAVED DATA
   Future loadExistingData() async {
-
     final prefs = await SharedPreferences.getInstance();
 
     goalController.text = prefs.getString("goal") ?? "";
@@ -44,7 +42,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   /// VALIDATION
   bool validateInputs() {
-
     String goal = goalController.text.trim();
     String healthHistory = healthHistoryController.text.trim();
     double height = double.tryParse(heightController.text.trim()) ?? -1;
@@ -91,7 +88,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   /// UPDATE PROFILE
   Future<void> updateProfile() async {
-
     if (!validateInputs()) return;
 
     setState(() => isLoading = true);
@@ -100,7 +96,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     String token = prefs.getString("token") ?? "";
 
     try {
-
       final response = await http.put(
         Uri.parse("$baseUrl/api/v1/customers/goal"),
         headers: {
@@ -119,7 +114,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
       setState(() => isLoading = false);
 
       if (response.statusCode == 200) {
-
         final data = jsonDecode(response.body);
 
         await prefs.setString("goal", data["goal"] ?? "");
@@ -131,49 +125,34 @@ class _EditProfilePageState extends State<EditProfilePage> {
         showMessage("Profile updated successfully");
 
         Navigator.pop(context, true);
-
       } else {
-
         showMessage("Update failed");
-
       }
-
     } catch (e) {
-
       setState(() => isLoading = false);
       showMessage("Server error");
-
     }
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-
       appBar: AppBar(
         title: const Text("Edit Profile"),
         backgroundColor: Colors.red,
       ),
-
       body: Padding(
         padding: const EdgeInsets.all(20),
-
         child: SingleChildScrollView(
-
           child: Column(
-
             children: [
-
               TextField(
                 controller: goalController,
                 decoration: const InputDecoration(
                   labelText: "Goal",
                 ),
               ),
-
               const SizedBox(height: 15),
-
               TextField(
                 controller: healthHistoryController,
                 decoration: const InputDecoration(
@@ -181,9 +160,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ),
                 maxLines: 3,
               ),
-
               const SizedBox(height: 15),
-
               TextField(
                 controller: heightController,
                 keyboardType: TextInputType.number,
@@ -191,9 +168,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   labelText: "Height (cm)",
                 ),
               ),
-
               const SizedBox(height: 15),
-
               TextField(
                 controller: weightController,
                 keyboardType: TextInputType.number,
@@ -201,59 +176,39 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   labelText: "Weight (kg)",
                 ),
               ),
-
               const SizedBox(height: 15),
-
               DropdownButtonFormField<String>(
                 value: selectedActivityLevel,
                 hint: const Text("Select Activity Level"),
-
                 items: const [
-
+                  DropdownMenuItem(value: "LOW", child: Text("Low Activity")),
                   DropdownMenuItem(
-                      value: "LOW",
-                      child: Text("Low Activity")),
-
-                  DropdownMenuItem(
-                      value: "MODERATE",
-                      child: Text("Moderate Activity")),
-
-                  DropdownMenuItem(
-                      value: "HIGH",
-                      child: Text("High Activity")),
-
+                      value: "MODERATE", child: Text("Moderate Activity")),
+                  DropdownMenuItem(value: "HIGH", child: Text("High Activity")),
                 ],
-
                 onChanged: (val) {
                   setState(() {
                     selectedActivityLevel = val;
                   });
                 },
               ),
-
               const SizedBox(height: 30),
-
               SizedBox(
                 width: double.infinity,
                 height: 45,
-
                 child: ElevatedButton(
-
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                   ),
-
                   onPressed: isLoading ? null : updateProfile,
-
                   child: isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
-                    "Update Profile",
-                    style: TextStyle(color: Colors.white),
-                  ),
+                          "Update Profile",
+                          style: TextStyle(color: Colors.white),
+                        ),
                 ),
               ),
-
             ],
           ),
         ),

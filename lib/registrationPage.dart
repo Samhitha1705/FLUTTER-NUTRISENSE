@@ -25,8 +25,8 @@ class _RegistrationpageState extends State<Registrationpage> {
   String? selectedRole;
 
   bool isValidPassword(String password) {
-    final regex = RegExp(
-        r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!]).{8,}$');
+    final regex =
+        RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!]).{8,}$');
     return regex.hasMatch(password);
   }
 
@@ -56,7 +56,8 @@ class _RegistrationpageState extends State<Registrationpage> {
       if (qualificationController.text.isEmpty ||
           specializationController.text.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Enter qualification and specialization")),
+          const SnackBar(
+              content: Text("Enter qualification and specialization")),
         );
         return;
       }
@@ -194,31 +195,29 @@ class _RegistrationpageState extends State<Registrationpage> {
                         TextField(
                           controller: firstNameController,
                           decoration:
-                          const InputDecoration(labelText: "First Name"),
+                              const InputDecoration(labelText: "First Name"),
                         ),
                         const SizedBox(height: 15),
                         TextField(
                           controller: lastNameController,
                           decoration:
-                          const InputDecoration(labelText: "Last Name"),
+                              const InputDecoration(labelText: "Last Name"),
                         ),
                         const SizedBox(height: 15),
                         TextField(
                           controller: emailController,
-                          decoration:
-                          const InputDecoration(labelText: "Email"),
+                          decoration: const InputDecoration(labelText: "Email"),
                         ),
                         const SizedBox(height: 15),
                         TextField(
                           controller: phoneController,
-                          decoration:
-                          const InputDecoration(labelText: "Phone"),
+                          decoration: const InputDecoration(labelText: "Phone"),
                         ),
                         const SizedBox(height: 15),
                         DropdownButtonFormField<String>(
                           value: selectedRole,
                           decoration:
-                          const InputDecoration(labelText: "I am a"),
+                              const InputDecoration(labelText: "I am a"),
                           items: const [
                             DropdownMenuItem(
                               value: "Customer",
@@ -278,11 +277,11 @@ class _RegistrationpageState extends State<Registrationpage> {
                             onPressed: isLoading ? null : registerUser,
                             child: isLoading
                                 ? const CircularProgressIndicator(
-                                color: Colors.white)
+                                    color: Colors.white)
                                 : const Text(
-                              "Register",
-                              style: TextStyle(color: Colors.white),
-                            ),
+                                    "Register",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 15),

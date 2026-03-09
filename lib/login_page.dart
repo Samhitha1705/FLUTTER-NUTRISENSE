@@ -360,7 +360,6 @@
 //   }
 // }
 
-
 // import 'dart:convert';
 // import 'package:flutter/material.dart';
 // import 'package:http/http.dart' as http;
@@ -647,8 +646,6 @@
 //   }
 // }
 
-
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -699,7 +696,8 @@ class _LoginPageState extends State<LoginPage> {
       if (selectedRole == "Customer") {
         url = Uri.parse("http://192.168.100.162:8080/api/v1/customers/login");
       } else {
-        url = Uri.parse("http://192.168.100.162:8080/api/v1/nutritionists/login");
+        url =
+            Uri.parse("http://192.168.100.162:8080/api/v1/nutritionists/login");
       }
 
       final response = await http.post(
@@ -747,13 +745,13 @@ class _LoginPageState extends State<LoginPage> {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => const StatefulDashboard()),
-                (route) => false,
+            (route) => false,
           );
         } else {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => const DashboardHomePage()),
-                (route) => false,
+            (route) => false,
           );
         }
       } else {
@@ -835,6 +833,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           const SizedBox(height: 20),
+
                           /// PASSWORD
                           TextField(
                             controller: passwordController,
@@ -857,6 +856,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           const SizedBox(height: 20),
+
                           /// ROLE DROPDOWN
                           DropdownButtonFormField<String>(
                             value: selectedRole,
@@ -879,6 +879,7 @@ class _LoginPageState extends State<LoginPage> {
                               });
                             },
                           ),
+
                           /// FORGOT PASSWORD
                           Align(
                             alignment: Alignment.centerRight,
@@ -888,7 +889,7 @@ class _LoginPageState extends State<LoginPage> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) =>
-                                    const ForgotPasswordEmailPage(),
+                                        const ForgotPasswordEmailPage(),
                                   ),
                                 );
                               },
@@ -902,6 +903,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           const SizedBox(height: 10),
+
                           /// LOGIN BUTTON
                           SizedBox(
                             width: double.infinity,
@@ -916,17 +918,18 @@ class _LoginPageState extends State<LoginPage> {
                               onPressed: isLoading ? null : loginUser,
                               child: isLoading
                                   ? const CircularProgressIndicator(
-                                  color: Colors.white)
+                                      color: Colors.white)
                                   : const Text(
-                                "Login",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                                      "Login",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                             ),
                           ),
                           const SizedBox(height: 10),
+
                           /// REGISTER BUTTON
                           TextButton(
                             onPressed: () {
