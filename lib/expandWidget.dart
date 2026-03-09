@@ -24,7 +24,6 @@ class _ExpandWidgetState extends State<ExpandWidget> {
   String phone = "";
   String? imagePath;
 
-  /// NEW PROFILE DATA
   String goal = "";
   String healthHistory = "";
   double height = 0;
@@ -39,29 +38,24 @@ class _ExpandWidgetState extends State<ExpandWidget> {
     loadProfile();
   }
 
-  /// LOAD PROFILE
   Future<void> loadProfile() async {
 
     final prefs = await SharedPreferences.getInstance();
 
-    /// LOAD LOCAL DATA
-    if (mounted) {
-      setState(() {
-        name = prefs.getString("name") ?? "";
-        email = prefs.getString("email") ?? "";
-        phone = prefs.getString("phone") ?? "";
-        imagePath = prefs.getString("imagePath");
+    setState(() {
+      name = prefs.getString("name") ?? "";
+      email = prefs.getString("email") ?? "";
+      phone = prefs.getString("phone") ?? "";
+      imagePath = prefs.getString("imagePath");
 
-        goal = prefs.getString("goal") ?? "";
-        healthHistory = prefs.getString("healthHistory") ?? "";
-        height = prefs.getDouble("height") ?? 0;
-        weight = prefs.getDouble("weight") ?? 0;
-        activityLevel = prefs.getString("activityLevel") ?? "";
-      });
-    }
+      goal = prefs.getString("goal") ?? "";
+      healthHistory = prefs.getString("healthHistory") ?? "";
+      height = prefs.getDouble("height") ?? 0;
+      weight = prefs.getDouble("weight") ?? 0;
+      activityLevel = prefs.getString("activityLevel") ?? "";
+    });
 
     String? token = prefs.getString('token');
-
     if (token == null) return;
 
     try {
@@ -77,67 +71,86 @@ class _ExpandWidgetState extends State<ExpandWidget> {
       if (response.statusCode == 200) {
 
         final data = json.decode(response.body);
-
         final customer = data['customerResponseDto'] ?? data;
 
-        String firstName = customer['firstName'] ?? '';
-        String lastName = customer['lastName'] ?? '';
-        String emailRes = customer['email'] ?? '';
-        String phoneRes = customer['phone'] ?? '';
+        String fullName =
+        "${customer['firstName'] ?? ''} ${customer['lastName'] ?? ''}".trim();
 
-        String fullName = "$firstName $lastName".trim();
-
-        if (mounted) {
-          setState(() {
-            name = fullName;
-            email = emailRes;
-            phone = phoneRes;
-          });
-        }
+        setState(() {
+          name = fullName;
+          email = customer['email'] ?? "";
+          phone = customer['phone'] ?? "";
+        });
 
         await prefs.setString('name', fullName);
-        await prefs.setString('email', emailRes);
-        await prefs.setString('phone', phoneRes);
+        await prefs.setString('email', email);
+        await prefs.setString('phone', phone);
       }
 
     } catch (e) {
-      print("PROFILE ERROR: $e");
+      print(e);
     }
   }
 
-  /// PICK PROFILE IMAGE
   Future<void> pickImage() async {
 
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final picked = await picker.pickImage(source: ImageSource.gallery);
 
-    if (pickedFile != null) {
+    if (picked != null) {
 
       final prefs = await SharedPreferences.getInstance();
 
-      if (mounted) {
-        setState(() {
-          imagePath = pickedFile.path;
-        });
-      }
+      setState(() {
+        imagePath = picked.path;
+      });
 
-      await prefs.setString("imagePath", pickedFile.path);
+      await prefs.setString("imagePath", picked.path);
     }
   }
 
-  /// PROFILE IMAGE
   Widget profileImage() {
 
     if (imagePath != null && File(imagePath!).existsSync()) {
       return CircleAvatar(
-        radius: 45,
+        radius: 50,
         backgroundImage: FileImage(File(imagePath!)),
       );
     }
 
     return const CircleAvatar(
-      radius: 45,
+      radius: 50,
       backgroundImage: AssetImage("assets/images/profile.png"),
+    );
+  }
+
+  Widget profileStat(String label, String value, IconData icon) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.red),
+          const SizedBox(height: 6),
+          Text(value,
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold, fontSize: 16)),
+          Text(label, style: const TextStyle(color: Colors.grey))
+        ],
+      ),
+    );
+  }
+
+  Widget menuTile(IconData icon, String title, VoidCallback onTap) {
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        leading: Icon(icon, color: Colors.red),
+        title: Text(title),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        onTap: onTap,
+      ),
     );
   }
 
@@ -146,9 +159,12 @@ class _ExpandWidgetState extends State<ExpandWidget> {
 
     return Scaffold(
 
+      backgroundColor: Colors.grey.shade100,
+
       appBar: AppBar(
         title: const Text("Profile"),
         centerTitle: true,
+        backgroundColor: Colors.red,
       ),
 
       body: SingleChildScrollView(
@@ -159,7 +175,7 @@ class _ExpandWidgetState extends State<ExpandWidget> {
 
             const SizedBox(height: 20),
 
-            /// PROFILE IMAGE
+            /// PROFILE HEADER
             GestureDetector(
               onTap: pickImage,
               child: profileImage(),
@@ -167,136 +183,118 @@ class _ExpandWidgetState extends State<ExpandWidget> {
 
             const SizedBox(height: 10),
 
-            const Text(
-              "Tap to change profile picture",
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-
-            const SizedBox(height: 20),
-
-            /// NAME
             Text(
               name.isEmpty ? "User" : name,
               style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold),
             ),
 
-            const SizedBox(height: 5),
+            const SizedBox(height: 4),
 
-            /// EMAIL
             Text(
-              email.isEmpty ? "No Email" : email,
+              email,
               style: const TextStyle(color: Colors.grey),
             ),
 
-            const SizedBox(height: 5),
-
-            /// PHONE
             if (phone.isNotEmpty)
               Text(
                 phone,
                 style: const TextStyle(color: Colors.grey),
               ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 25),
 
-            /// SHOW UPDATED PROFILE DATA
-            if (goal.isNotEmpty)
-              Text("Goal: $goal"),
+            /// HEALTH CARD
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 15),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              elevation: 3,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
 
-            if (healthHistory.isNotEmpty)
-              Text("Health History: $healthHistory"),
+                  children: [
 
-            if (height > 0)
-              Text("Height: $height cm"),
+                    Row(
+                      children: [
+                        profileStat("Height", "$height cm", Icons.height),
+                        profileStat("Weight", "$weight kg", Icons.monitor_weight),
+                        profileStat("Activity", activityLevel, Icons.directions_run),
+                      ],
+                    ),
 
-            if (weight > 0)
-              Text("Weight: $weight kg"),
+                    const SizedBox(height: 15),
 
-            if (activityLevel.isNotEmpty)
-              Text("Activity Level: $activityLevel"),
+                    if (goal.isNotEmpty)
+                      Row(
+                        children: [
+                          const Icon(Icons.flag, color: Colors.red),
+                          const SizedBox(width: 10),
+                          Expanded(child: Text("Goal: $goal")),
+                        ],
+                      ),
 
-            const SizedBox(height: 30),
+                    const SizedBox(height: 10),
 
-            /// EDIT PROFILE
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text("Edit Profile"),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () async {
-
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const EditProfilePage(),
-                  ),
-                );
-
-                /// REFRESH PROFILE AFTER UPDATE
-                if (result == true) {
-                  loadProfile();
-                }
-              },
+                    if (healthHistory.isNotEmpty)
+                      Row(
+                        children: [
+                          const Icon(Icons.health_and_safety,
+                              color: Colors.red),
+                          const SizedBox(width: 10),
+                          Expanded(child: Text(healthHistory)),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
             ),
 
-            const Divider(),
+            const SizedBox(height: 25),
 
-            /// MY ORDERS
-            ListTile(
-              leading: const Icon(Icons.shopping_bag),
-              title: const Text("My Orders"),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {
+            /// MENU OPTIONS
+            menuTile(Icons.edit, "Edit Profile", () async {
 
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MyOrdersPage(),
-                  ),
-                );
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const EditProfilePage(),
+                ),
+              );
 
-              },
-            ),
+              if (result == true) {
+                loadProfile();
+              }
+            }),
 
-            const Divider(),
+            menuTile(Icons.shopping_bag, "My Orders", () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MyOrdersPage(),
+                ),
+              );
+            }),
 
-            /// ADDRESS BOOK
-            ListTile(
-              leading: const Icon(Icons.location_on),
-              title: const Text("Address Book"),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {
+            menuTile(Icons.location_on, "Address Book", () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AddressBookPage(),
+                ),
+              );
+            }),
 
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AddressBookPage(),
-                  ),
-                );
-
-              },
-            ),
-
-            const Divider(),
-
-            /// REVIEWS
-            ListTile(
-              leading: const Icon(Icons.reviews),
-              title: const Text("Reviews"),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ReviewsPage(),
-                  ),
-                );
-
-              },
-            ),
+            menuTile(Icons.reviews, "Reviews", () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ReviewsPage(),
+                ),
+              );
+            }),
 
             const SizedBox(height: 30),
 

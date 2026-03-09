@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'address_model.dart';
 import 'add_address_form.dart';
 
@@ -12,191 +14,202 @@ class AddressBookPage extends StatefulWidget {
 }
 
 class _AddressBookPageState extends State<AddressBookPage> {
+
   List<AddressModel> addressList = [];
+
+  final String baseUrl = "http://192.168.100.162:8080";
 
   @override
   void initState() {
     super.initState();
-    loadAddresses();
+    fetchAddresses();
   }
 
-  Future<void> loadAddresses() async {
+  Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    final data = prefs.getString('addresses');
-
-    if (data != null) {
-      final List decoded = jsonDecode(data);
-      addressList =
-          decoded.map((e) => AddressModel.fromJson(e)).toList();
-    }
-
-    setState(() {});
+    return prefs.getString("token");
   }
 
-  Future<void> saveAddresses() async {
-    final prefs = await SharedPreferences.getInstance();
-    final encoded =
-    jsonEncode(addressList.map((e) => e.toJson()).toList());
-    await prefs.setString('addresses', encoded);
-  }
+  /// GET ADDRESSES
+  Future<void> fetchAddresses() async {
 
-  // ADD OR EDIT ADDRESS
-  void addOrEditAddress(AddressModel address, {int? index}) async {
-    if (index == null) {
-      if (addressList.isEmpty) {
-        address.isDefault = true;
-      }
-      addressList.add(address);
-    } else {
-      address.isDefault = addressList[index].isDefault;
-      addressList[index] = address;
-    }
+    String? token = await getToken();
 
-    await saveAddresses();
-    setState(() {});
-  }
-
-  // DELETE ADDRESS
-  void deleteAddress(int index) async {
-    bool wasDefault = addressList[index].isDefault;
-
-    addressList.removeAt(index);
-
-    if (wasDefault && addressList.isNotEmpty) {
-      addressList[0].isDefault = true;
-    }
-
-    await saveAddresses();
-    setState(() {});
-
-    // ✅ Show Snackbar
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Address deleted successfully"),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
-
-  // ✅ CONFIRM DELETE DIALOG
-  Future<void> confirmDelete(int index) async {
-    bool? result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Delete Address"),
-        content: const Text(
-          "Are you sure you want to delete this address?\n\nThis action cannot be undone.",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("No"),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              "Yes",
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
+    final response = await http.get(
+      Uri.parse("$baseUrl/api/v1/customers/addresses"),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json"
+      },
     );
 
-    if (result == true) {
-      deleteAddress(index);
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+
+      setState(() {
+        addressList =
+            data.map((e) => AddressModel.fromJson(e)).toList();
+      });
     }
   }
 
-  // ✅ SET DEFAULT
-  Future<void> setDefault(int index) async {
-    for (int i = 0; i < addressList.length; i++) {
-      addressList[i].isDefault = false;
-    }
+  /// ADD ADDRESS
+  Future<void> addAddress(AddressModel address) async {
 
-    addressList[index].isDefault = true;
+    String? token = await getToken();
 
-    await saveAddresses();
-    setState(() {});
+    await http.post(
+      Uri.parse("$baseUrl/api/v1/customers/addresses"),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json"
+      },
+      body: jsonEncode(address.toJson()),
+    );
+
+    fetchAddresses();
   }
 
-  void openForm({AddressModel? address, int? index}) {
+  /// UPDATE ADDRESS
+  Future<void> updateAddress(AddressModel address) async {
+
+    String? token = await getToken();
+
+    await http.put(
+      Uri.parse("$baseUrl/api/v1/customers/addresses/${address.id}"),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json"
+      },
+      body: jsonEncode(address.toJson()),
+    );
+
+    fetchAddresses();
+  }
+
+  /// DELETE ADDRESS
+  Future<void> deleteAddress(int id) async {
+
+    String? token = await getToken();
+
+    await http.delete(
+      Uri.parse("$baseUrl/api/v1/customers/addresses/$id"),
+      headers: {
+        "Authorization": "Bearer $token",
+      },
+    );
+
+    fetchAddresses();
+  }
+
+  void openForm({AddressModel? address}) {
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (_) => AddAddressForm(
-        existingAddress: address,
-        onSave: (newAddress) =>
-            addOrEditAddress(newAddress, index: index),
+        address: address,
+        onSave: (newAddress) {
+
+          if (address == null) {
+            addAddress(newAddress);
+          } else {
+            updateAddress(newAddress);
+          }
+        },
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
+
       appBar: AppBar(
         title: const Text("Address Book"),
         backgroundColor: Colors.red,
       ),
+
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.red,
-        onPressed: () => openForm(),
         child: const Icon(Icons.add),
+        onPressed: () => openForm(),
       ),
+
       body: addressList.isEmpty
-          ? const Center(child: Text("No addresses added yet"))
+          ? const Center(child: Text("No addresses added"))
           : ListView.builder(
+
         itemCount: addressList.length,
+
         itemBuilder: (context, index) {
+
           final address = addressList[index];
 
           return Card(
+
             margin: const EdgeInsets.symmetric(
                 horizontal: 15, vertical: 8),
+
             child: ListTile(
+
               leading: Icon(
                 Icons.location_on,
-                color: address.isDefault
+                color: address.defaultAddress
                     ? Colors.green
                     : Colors.red,
               ),
-              title: Text(
-                  "${address.houseNo}, ${address.area}"),
+
+              title: Text(address.line1),
+
               subtitle: Text(
-                  "${address.city}, ${address.state} - ${address.pincode}\n"
-                      "Receiver: ${address.receiverName}\n"
-                      "Phone: ${address.countryCode} ${address.receiverPhone}"),
+                "${address.line2}\n${address.city} - ${address.postCode}",
+              ),
+
               isThreeLine: true,
-
-              onTap: () async {
-                await setDefault(index);
-
-                String fullAddress =
-                    "${address.houseNo}, ${address.area}, "
-                    "${address.city}, ${address.state} - ${address.pincode}\n"
-                    "Receiver: ${address.receiverName}\n"
-                    "Phone: ${address.countryCode} ${address.receiverPhone}";
-
-                Navigator.pop(context, fullAddress);
-              },
 
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+
+                  // EDIT BUTTON
                   IconButton(
                     icon: const Icon(Icons.edit,
                         color: Colors.blue),
-                    onPressed: () => openForm(
-                        address: address, index: index),
+                    onPressed: () => openForm(address: address),
                   ),
+
+                  // DELETE BUTTON WITH CONFIRMATION
                   IconButton(
                     icon: const Icon(Icons.delete,
                         color: Colors.red),
-                    onPressed: () =>
-                        confirmDelete(index), // ✅ Updated
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text("Delete Address"),
+                          content: const Text(
+                              "Are you sure you want to delete this address?"),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(false),
+                              child: const Text("No"),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(true),
+                              child: const Text("Yes"),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirm == true) {
+                        deleteAddress(address.id!);
+                      }
+                    },
                   ),
+
                 ],
               ),
             ),

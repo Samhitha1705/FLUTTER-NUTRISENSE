@@ -1,51 +1,38 @@
 class AddressModel {
-  String houseNo;
-  String area;
+  int? id;
+  String line1;
+  String line2;
   String city;
-  String state;
-  String pincode;
-  String receiverName;
-  String receiverPhone;
-  String countryCode;
-  bool isDefault;
+  String postCode;
+  bool defaultAddress;
 
   AddressModel({
-    required this.houseNo,
-    required this.area,
+    this.id,
+    required this.line1,
+    required this.line2,
     required this.city,
-    required this.state,
-    required this.pincode,
-    required this.receiverName,
-    required this.receiverPhone,
-    required this.countryCode,
-    this.isDefault = false,
+    required this.postCode,
+    this.defaultAddress = false,
   });
-
-  Map<String, dynamic> toJson() {
-    return {
-      "houseNo": houseNo,
-      "area": area,
-      "city": city,
-      "state": state,
-      "pincode": pincode,
-      "receiverName": receiverName,
-      "receiverPhone": receiverPhone,
-      "countryCode": countryCode,
-      "isDefault": isDefault,
-    };
-  }
 
   factory AddressModel.fromJson(Map<String, dynamic> json) {
     return AddressModel(
-      houseNo: json["houseNo"] ?? "",
-      area: json["area"] ?? "",
+      id: json["id"],
+      line1: json["line1"] ?? "",
+      line2: json["line2"] ?? "",
       city: json["city"] ?? "",
-      state: json["state"] ?? "",
-      pincode: json["pincode"] ?? "",
-      receiverName: json["receiverName"] ?? "",
-      receiverPhone: json["receiverPhone"] ?? "",
-      countryCode: json["countryCode"] ?? "+91",
-      isDefault: json["isDefault"] ?? false, // ✅ FIXED HERE
+      postCode: json["postCode"] ?? "",
+      defaultAddress: json["defaultAddress"] ?? false,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "line1": line1,
+      "line2": line2,
+      "city": city,
+      "postCode": postCode,
+      "defaultAddress": defaultAddress,
+    };
   }
 }
