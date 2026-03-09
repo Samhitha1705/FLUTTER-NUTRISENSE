@@ -67,7 +67,7 @@ class _StatefulDashboardState extends State<StatefulDashboard> {
                 onTap: () async {
                   bool? updated = await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const ExpandWidget()),
+                    MaterialPageRoute(builder: (_) => ExpandWidget()),
                   );
                   // Reload profile after returning
                   if (updated == true) loadDrawerProfile();

@@ -24,7 +24,14 @@ class _ExpandWidgetState extends State<ExpandWidget> {
   String phone = "";
   String? imagePath;
 
-  final String baseUrl = "http://10.0.2.2:8080";
+  /// NEW PROFILE DATA
+  String goal = "";
+  String healthHistory = "";
+  double height = 0;
+  double weight = 0;
+  String activityLevel = "";
+
+  final String baseUrl = "http://192.168.100.162:8080";
 
   @override
   void initState() {
@@ -33,53 +40,64 @@ class _ExpandWidgetState extends State<ExpandWidget> {
   }
 
   /// LOAD PROFILE
-  Future loadProfile() async {
+  Future<void> loadProfile() async {
 
     final prefs = await SharedPreferences.getInstance();
 
-    /// 1️⃣ LOAD LOCAL DATA FIRST
-    setState(() {
-      name = prefs.getString("name") ?? "";
-      email = prefs.getString("email") ?? "";
-      phone = prefs.getString("phone") ?? "";
-      imagePath = prefs.getString("imagePath");
-    });
+    /// LOAD LOCAL DATA
+    if (mounted) {
+      setState(() {
+        name = prefs.getString("name") ?? "";
+        email = prefs.getString("email") ?? "";
+        phone = prefs.getString("phone") ?? "";
+        imagePath = prefs.getString("imagePath");
+
+        goal = prefs.getString("goal") ?? "";
+        healthHistory = prefs.getString("healthHistory") ?? "";
+        height = prefs.getDouble("height") ?? 0;
+        weight = prefs.getDouble("weight") ?? 0;
+        activityLevel = prefs.getString("activityLevel") ?? "";
+      });
+    }
 
     String? token = prefs.getString('token');
 
-    /// 2️⃣ FETCH LATEST PROFILE FROM BACKEND
+    if (token == null) return;
+
     try {
 
-      if (token != null) {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/v1/customers/profile'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json'
+        },
+      );
 
-        final response = await http.get(
-          Uri.parse('$baseUrl/api/v1/customers/profile'),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json'
-          },
-        );
+      if (response.statusCode == 200) {
 
-        if (response.statusCode == 200) {
+        final data = json.decode(response.body);
 
-          final data = json.decode(response.body);
+        final customer = data['customerResponseDto'] ?? data;
 
-          String firstName = data['firstName'] ?? '';
-          String lastName = data['lastName'] ?? '';
-          String emailRes = data['email'] ?? '';
-          String phoneRes = data['phone'] ?? '';
+        String firstName = customer['firstName'] ?? '';
+        String lastName = customer['lastName'] ?? '';
+        String emailRes = customer['email'] ?? '';
+        String phoneRes = customer['phone'] ?? '';
 
+        String fullName = "$firstName $lastName".trim();
+
+        if (mounted) {
           setState(() {
-            name = "$firstName $lastName";
+            name = fullName;
             email = emailRes;
             phone = phoneRes;
           });
-
-          /// SAVE UPDATED DATA
-          await prefs.setString('name', name);
-          await prefs.setString('email', emailRes);
-          await prefs.setString('phone', phoneRes);
         }
+
+        await prefs.setString('name', fullName);
+        await prefs.setString('email', emailRes);
+        await prefs.setString('phone', phoneRes);
       }
 
     } catch (e) {
@@ -87,8 +105,8 @@ class _ExpandWidgetState extends State<ExpandWidget> {
     }
   }
 
-  /// PICK IMAGE
-  Future pickImage() async {
+  /// PICK PROFILE IMAGE
+  Future<void> pickImage() async {
 
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -97,9 +115,11 @@ class _ExpandWidgetState extends State<ExpandWidget> {
 
       final prefs = await SharedPreferences.getInstance();
 
-      setState(() {
-        imagePath = pickedFile.path;
-      });
+      if (mounted) {
+        setState(() {
+          imagePath = pickedFile.path;
+        });
+      }
 
       await prefs.setString("imagePath", pickedFile.path);
     }
@@ -132,7 +152,9 @@ class _ExpandWidgetState extends State<ExpandWidget> {
       ),
 
       body: SingleChildScrollView(
+
         child: Column(
+
           children: [
 
             const SizedBox(height: 20),
@@ -172,79 +194,112 @@ class _ExpandWidgetState extends State<ExpandWidget> {
             const SizedBox(height: 5),
 
             /// PHONE
-            Text(
-              phone.isEmpty ? "" : phone,
-              style: const TextStyle(color: Colors.grey),
-            ),
+            if (phone.isNotEmpty)
+              Text(
+                phone,
+                style: const TextStyle(color: Colors.grey),
+              ),
+
+            const SizedBox(height: 20),
+
+            /// SHOW UPDATED PROFILE DATA
+            if (goal.isNotEmpty)
+              Text("Goal: $goal"),
+
+            if (healthHistory.isNotEmpty)
+              Text("Health History: $healthHistory"),
+
+            if (height > 0)
+              Text("Height: $height cm"),
+
+            if (weight > 0)
+              Text("Weight: $weight kg"),
+
+            if (activityLevel.isNotEmpty)
+              Text("Activity Level: $activityLevel"),
 
             const SizedBox(height: 30),
 
-            /// MENU LIST
+            /// EDIT PROFILE
             ListTile(
               leading: const Icon(Icons.edit),
               title: const Text("Edit Profile"),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {
-                Navigator.push(
+              onTap: () async {
+
+                final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const EditProfilePage(),
                   ),
                 );
+
+                /// REFRESH PROFILE AFTER UPDATE
+                if (result == true) {
+                  loadProfile();
+                }
               },
             ),
 
             const Divider(),
 
+            /// MY ORDERS
             ListTile(
               leading: const Icon(Icons.shopping_bag),
               title: const Text("My Orders"),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {
+
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const MyOrdersPage(),
                   ),
                 );
+
               },
             ),
 
             const Divider(),
 
+            /// ADDRESS BOOK
             ListTile(
               leading: const Icon(Icons.location_on),
               title: const Text("Address Book"),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {
+
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const AddressBookPage(),
                   ),
                 );
+
               },
             ),
 
             const Divider(),
 
+            /// REVIEWS
             ListTile(
               leading: const Icon(Icons.reviews),
               title: const Text("Reviews"),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {
+
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const ReviewsPage(),
                   ),
                 );
+
               },
             ),
 
-            const Divider(),
-
             const SizedBox(height: 30),
+
           ],
         ),
       ),

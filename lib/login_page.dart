@@ -7,8 +7,6 @@ import 'nutritionist/screens/dashboard_home_page.dart';
 import 'forgot_password_email_page.dart';
 import 'registrationPage.dart';
 import 'statefull.dart';
-import 'nutritionist_dashboard.dart';
-import 'auth_storage.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -47,13 +45,9 @@ class _LoginPageState extends State<LoginPage> {
 
       Uri url;
 
-      /// CUSTOMER LOGIN
       if (selectedRole == "Customer") {
         url = Uri.parse("http://192.168.100.162:8080/api/v1/customers/login");
-      }
-
-      /// NUTRITIONIST LOGIN
-      else {
+      } else {
         url = Uri.parse("http://192.168.100.162:8080/api/v1/nutritionists/login");
       }
 
@@ -78,27 +72,29 @@ class _LoginPageState extends State<LoginPage> {
       if (response.statusCode == 200) {
 
         final data = jsonDecode(response.body);
-
         final prefs = await SharedPreferences.getInstance();
 
         /// SAVE TOKEN
         if (data["token"] != null) {
           await prefs.setString("token", data["token"]);
+          print("TOKEN SAVED: ${data["token"]}");
         }
 
-        /// SAVE CUSTOMER DATA
+        /// CUSTOMER DATA
         if (selectedRole == "Customer" && data["customerResponseDto"] != null) {
 
           final customer = data["customerResponseDto"];
 
-          await prefs.setString("name", customer["firstName"] ?? "");
-          await prefs.setString("lastName", customer["lastName"] ?? "");
+          String firstName = customer["firstName"] ?? "";
+          String lastName = customer["lastName"] ?? "";
+
+          await prefs.setString("name", "$firstName $lastName");
           await prefs.setString("email", customer["email"] ?? "");
           await prefs.setString("phone", customer["phone"] ?? "");
 
         }
 
-        /// SAVE NUTRITIONIST DATA
+        /// NUTRITIONIST DATA
         if (selectedRole == "Nutritionist" && data["nutritionistResponseDto"] != null) {
 
           final nutritionist = data["nutritionistResponseDto"];
@@ -110,7 +106,7 @@ class _LoginPageState extends State<LoginPage> {
 
         }
 
-        /// NAVIGATE
+        /// NAVIGATION
         if (selectedRole == "Customer") {
 
           Navigator.pushAndRemoveUntil(
@@ -182,7 +178,6 @@ class _LoginPageState extends State<LoginPage> {
 
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-
                   children: [
 
                     const Align(
@@ -214,7 +209,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     Container(
                       padding: const EdgeInsets.all(20),
-
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
@@ -249,7 +243,6 @@ class _LoginPageState extends State<LoginPage> {
                                       ? Icons.visibility
                                       : Icons.visibility_off,
                                 ),
-
                                 onPressed: () {
                                   setState(() {
                                     isPasswordVisible = !isPasswordVisible;
@@ -264,25 +257,19 @@ class _LoginPageState extends State<LoginPage> {
                           /// ROLE
                           DropdownButtonFormField<String>(
                             value: selectedRole,
-
                             decoration: const InputDecoration(
                               hintText: "Login as",
                             ),
-
                             items: const [
-
                               DropdownMenuItem(
                                 value: "Customer",
                                 child: Text("Customer"),
                               ),
-
                               DropdownMenuItem(
                                 value: "Nutritionist",
                                 child: Text("Nutritionist"),
                               ),
-
                             ],
-
                             onChanged: (value) {
                               setState(() {
                                 selectedRole = value;
@@ -293,20 +280,15 @@ class _LoginPageState extends State<LoginPage> {
                           /// FORGOT PASSWORD
                           Align(
                             alignment: Alignment.centerRight,
-
                             child: TextButton(
                               onPressed: () {
-
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) =>
-                                    const ForgotPasswordEmailPage(),
+                                    builder: (_) => const ForgotPasswordEmailPage(),
                                   ),
                                 );
-
                               },
-
                               child: const Text(
                                 "Forgot Password?",
                                 style: TextStyle(
@@ -323,7 +305,6 @@ class _LoginPageState extends State<LoginPage> {
                           SizedBox(
                             width: double.infinity,
                             height: 45,
-
                             child: ElevatedButton(
 
                               style: ElevatedButton.styleFrom(
@@ -336,9 +317,7 @@ class _LoginPageState extends State<LoginPage> {
                               onPressed: isLoading ? null : loginUser,
 
                               child: isLoading
-                                  ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
+                                  ? const CircularProgressIndicator(color: Colors.white)
                                   : const Text(
                                 "Login",
                                 style: TextStyle(
@@ -354,16 +333,13 @@ class _LoginPageState extends State<LoginPage> {
                           /// REGISTER
                           TextButton(
                             onPressed: () {
-
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => const Registrationpage(),
                                 ),
                               );
-
                             },
-
                             child: const Text(
                               "Create an account",
                               style: TextStyle(color: Colors.red),
