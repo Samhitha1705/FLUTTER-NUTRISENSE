@@ -336,7 +336,7 @@
 //                               Navigator.push(
 //                                 context,
 //                                 MaterialPageRoute(
-//                                   builder: (_) => const Registrationpage(),
+//                                   builderFnu: (_) => const Registrationpage(),
 //                                 ),
 //                               );
 //                             },
@@ -665,6 +665,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
+
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -672,12 +674,21 @@ class _LoginPageState extends State<LoginPage> {
   bool isLoading = false;
   String? selectedRole;
 
+  // Email validation regex
+  final RegExp emailRegex =
+  RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$");
+
+  // Password validation regex: 8+ chars, upper, lower, number, special
+  final RegExp passwordRegex =
+  RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!]).{8,}$');
+
   Future<void> loginUser() async {
-    if (emailController.text.isEmpty ||
-        passwordController.text.isEmpty ||
-        selectedRole == null) {
+    // Validate form first
+    if (!_formKey.currentState!.validate()) return;
+
+    if (selectedRole == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter email, password and role")),
+        const SnackBar(content: Text("Please select a role")),
       );
       return;
     }
@@ -706,9 +717,6 @@ class _LoginPageState extends State<LoginPage> {
         body: jsonEncode(bodyData),
       );
 
-      print("Status Code: ${response.statusCode}");
-      print("Response Body: ${response.body}");
-
       setState(() {
         isLoading = false;
       });
@@ -717,7 +725,7 @@ class _LoginPageState extends State<LoginPage> {
         final data = jsonDecode(response.body);
         final prefs = await SharedPreferences.getInstance();
 
-        /// SAVE TOKEN
+        /// SAVE TOKEN AND USER INFO
         if (selectedRole == "Customer") {
           await prefs.setString("token", data["token"] ?? "");
           if (data["customerResponseDto"] != null) {
@@ -745,13 +753,13 @@ class _LoginPageState extends State<LoginPage> {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => const StatefulDashboard()),
-            (route) => false,
+                (route) => false,
           );
         } else {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => const DashboardHomePage()),
-            (route) => false,
+                (route) => false,
           );
         }
       } else {
@@ -790,165 +798,193 @@ class _LoginPageState extends State<LoginPage> {
             child: SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "Login",
-                        style: TextStyle(
+                child: Form(
+                  key: _formKey,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "Login",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "Please enter your details",
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 25),
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
                           color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "Please enter your details",
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 25),
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Column(
-                        children: [
-                          /// EMAIL
-                          TextField(
-                            controller: emailController,
-                            decoration: const InputDecoration(
-                              hintText: "Email",
-                              border: UnderlineInputBorder(),
+                        child: Column(
+                          children: [
+                            /// EMAIL
+                            TextFormField(
+                              controller: emailController,
+                              decoration: const InputDecoration(
+                                hintText: "Email",
+                                border: UnderlineInputBorder(),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return "Email is required";
+                                }
+                                if (value.length > 255) {
+                                  return "Email must not exceed 255 characters";
+                                }
+                                if (!emailRegex.hasMatch(value.trim())) {
+                                  return "Email must be valid";
+                                }
+                                return null;
+                              },
                             ),
-                          ),
-                          const SizedBox(height: 20),
+                            const SizedBox(height: 20),
 
-                          /// PASSWORD
-                          TextField(
-                            controller: passwordController,
-                            obscureText: !isPasswordVisible,
-                            decoration: InputDecoration(
-                              hintText: "Password",
-                              border: const UnderlineInputBorder(),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  isPasswordVisible
+                            /// PASSWORD
+                            TextFormField(
+                              controller: passwordController,
+                              obscureText: !isPasswordVisible,
+                              decoration: InputDecoration(
+                                hintText: "Password",
+                                border: const UnderlineInputBorder(),
+                                suffixIcon: IconButton(
+                                  icon: Icon(isPasswordVisible
                                       ? Icons.visibility
-                                      : Icons.visibility_off,
+                                      : Icons.visibility_off),
+                                  onPressed: () {
+                                    setState(() {
+                                      isPasswordVisible = !isPasswordVisible;
+                                    });
+                                  },
                                 ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return "Password is required";
+                                }
+                                if (value.length < 8) {
+                                  return "Password must be at least 8 characters";
+                                }
+                                if (!passwordRegex.hasMatch(value)) {
+                                  return "Password must contain uppercase, lowercase, number, special character";
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 20),
+
+                            /// ROLE DROPDOWN
+                            DropdownButtonFormField<String>(
+                              value: selectedRole,
+                              decoration: const InputDecoration(
+                                hintText: "Login as",
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: "Customer",
+                                  child: Text("Customer"),
+                                ),
+                                DropdownMenuItem(
+                                  value: "Nutritionist",
+                                  child: Text("Nutritionist"),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedRole = value;
+                                });
+                              },
+                              validator: (value) =>
+                              value == null ? "Please select a role" : null,
+                            ),
+
+                            /// FORGOT PASSWORD
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
                                 onPressed: () {
-                                  setState(() {
-                                    isPasswordVisible = !isPasswordVisible;
-                                  });
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                      const ForgotPasswordEmailPage(),
+                                    ),
+                                  );
                                 },
+                                child: const Text(
+                                  "Forgot Password?",
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 13,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 20),
+                            const SizedBox(height: 10),
 
-                          /// ROLE DROPDOWN
-                          DropdownButtonFormField<String>(
-                            value: selectedRole,
-                            decoration: const InputDecoration(
-                              hintText: "Login as",
+                            /// LOGIN BUTTON
+                            SizedBox(
+                              width: double.infinity,
+                              height: 45,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                onPressed: isLoading ? null : loginUser,
+                                child: isLoading
+                                    ? const CircularProgressIndicator(
+                                    color: Colors.white)
+                                    : const Text(
+                                  "Login",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
                             ),
-                            items: const [
-                              DropdownMenuItem(
-                                value: "Customer",
-                                child: Text("Customer"),
-                              ),
-                              DropdownMenuItem(
-                                value: "Nutritionist",
-                                child: Text("Nutritionist"),
-                              ),
-                            ],
-                            onChanged: (value) {
-                              setState(() {
-                                selectedRole = value;
-                              });
-                            },
-                          ),
+                            const SizedBox(height: 10),
 
-                          /// FORGOT PASSWORD
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
+                            /// REGISTER BUTTON
+                            TextButton(
                               onPressed: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) =>
-                                        const ForgotPasswordEmailPage(),
+                                    builder: (_) => const Registrationpage(),
                                   ),
                                 );
                               },
                               child: const Text(
-                                "Forgot Password?",
-                                style: TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 13,
-                                ),
+                                "Create an account",
+                                style: TextStyle(color: Colors.red),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 10),
-
-                          /// LOGIN BUTTON
-                          SizedBox(
-                            width: double.infinity,
-                            height: 45,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              onPressed: isLoading ? null : loginUser,
-                              child: isLoading
-                                  ? const CircularProgressIndicator(
-                                      color: Colors.white)
-                                  : const Text(
-                                      "Login",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-
-                          /// REGISTER BUTTON
-                          TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const Registrationpage(),
-                                ),
-                              );
-                            },
-                            child: const Text(
-                              "Create an account",
-                              style: TextStyle(color: Colors.red),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  ],
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
                 ),
               ),
             ),
