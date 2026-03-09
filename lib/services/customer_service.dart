@@ -29,6 +29,11 @@ class CustomerService {
 
     final token = await getToken();
 
+    if (token == null) {
+      print("TOKEN MISSING");
+      return false;
+    }
+
     final url = Uri.parse("$baseUrl/customers/goal");
 
     final body = {
@@ -53,7 +58,21 @@ class CustomerService {
       print("PUT STATUS: ${response.statusCode}");
       print("PUT RESPONSE: ${response.body}");
 
-      return response.statusCode == 200;
+      if (response.statusCode == 200) {
+
+        final prefs = await SharedPreferences.getInstance();
+        final data = jsonDecode(response.body);
+
+        await prefs.setString("goal", data["goal"] ?? "");
+        await prefs.setString("healthHistory", data["healthHistory"] ?? "");
+        await prefs.setDouble("height", (data["height"] ?? 0).toDouble());
+        await prefs.setDouble("weight", (data["weight"] ?? 0).toDouble());
+        await prefs.setString("activityLevel", data["activityLevel"] ?? "");
+
+        return true;
+      }
+
+      return false;
 
     } catch (e) {
 

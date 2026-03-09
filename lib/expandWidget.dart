@@ -1,10 +1,9 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 import 'edit_profile.dart';
 import 'my_orders.dart';
@@ -19,16 +18,13 @@ class ExpandWidget extends StatefulWidget {
 }
 
 class _ExpandWidgetState extends State<ExpandWidget> {
+
   String name = "";
   String email = "";
   String phone = "";
-  String? imagePath; // Local path or backend URL
+  String? imagePath;
 
-  bool vegMode = false;
-  bool personalizedRatings = true;
-  bool darkMode = false;
-
-  final String baseUrl = 'http://192.168.100.162:8080'; // Replace with your backend URL
+  final String baseUrl = "http://10.0.2.2:8080";
 
   @override
   void initState() {
@@ -36,210 +32,219 @@ class _ExpandWidgetState extends State<ExpandWidget> {
     loadProfile();
   }
 
-  /// Load profile from backend or cache
+  /// LOAD PROFILE
   Future loadProfile() async {
+
     final prefs = await SharedPreferences.getInstance();
+
+    /// 1️⃣ LOAD LOCAL DATA FIRST
+    setState(() {
+      name = prefs.getString("name") ?? "";
+      email = prefs.getString("email") ?? "";
+      phone = prefs.getString("phone") ?? "";
+      imagePath = prefs.getString("imagePath");
+    });
+
     String? token = prefs.getString('token');
 
-    if (token != null) {
-      try {
+    /// 2️⃣ FETCH LATEST PROFILE FROM BACKEND
+    try {
+
+      if (token != null) {
+
         final response = await http.get(
           Uri.parse('$baseUrl/api/v1/customers/profile'),
-          headers: { 'Authorization': 'Bearer $token' },
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json'
+          },
         );
+
         if (response.statusCode == 200) {
+
           final data = json.decode(response.body);
+
+          String firstName = data['firstName'] ?? '';
+          String lastName = data['lastName'] ?? '';
+          String emailRes = data['email'] ?? '';
+          String phoneRes = data['phone'] ?? '';
+
           setState(() {
-            name = data['firstName'] ?? '';
-            email = data['email'] ?? '';
-            phone = data['phone'] ?? '';
-            imagePath = data['imageUrl']; // Backend URL
+            name = "$firstName $lastName";
+            email = emailRes;
+            phone = phoneRes;
           });
 
-          // Cache locally
+          /// SAVE UPDATED DATA
           await prefs.setString('name', name);
-          await prefs.setString('email', email);
-          await prefs.setString('phone', phone);
-          if (imagePath != null) await prefs.setString('imagePath', imagePath!);
+          await prefs.setString('email', emailRes);
+          await prefs.setString('phone', phoneRes);
         }
-      } catch (e) {
-        // Fallback to local cache if backend fails
-        setState(() {
-          name = prefs.getString('name') ?? '';
-          email = prefs.getString('email') ?? '';
-          phone = prefs.getString('phone') ?? '';
-          imagePath = prefs.getString('imagePath');
-        });
       }
+
+    } catch (e) {
+      print("PROFILE ERROR: $e");
     }
   }
 
-  /// Pick image and upload to backend
+  /// PICK IMAGE
   Future pickImage() async {
-    final prefs = await SharedPreferences.getInstance();
-    final picker = ImagePicker();
 
-    showModalBottomSheet(
-      context: context,
-      builder: (_) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Gallery'),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked = await picker.pickImage(source: ImageSource.gallery);
-                if (picked != null) await uploadImage(File(picked.path));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Camera'),
-              onTap: () async {
-                Navigator.pop(context);
-                final picked = await picker.pickImage(source: ImageSource.camera);
-                if (picked != null) await uploadImage(File(picked.path));
-              },
-            ),
-          ],
-        ),
-      ),
-    );
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+
+      final prefs = await SharedPreferences.getInstance();
+
+      setState(() {
+        imagePath = pickedFile.path;
+      });
+
+      await prefs.setString("imagePath", pickedFile.path);
+    }
   }
 
-  /// Upload image to backend
-  Future uploadImage(File file) async {
-    final prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
+  /// PROFILE IMAGE
+  Widget profileImage() {
 
-    if (token != null) {
-      final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/api/v1/customers/profile/image'));
-      request.headers['Authorization'] = 'Bearer $token';
-      request.files.add(await http.MultipartFile.fromPath('file', file.path));
-
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          imagePath = data['imageUrl'];
-        });
-        await prefs.setString('imagePath', imagePath!);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Image upload failed')));
-      }
+    if (imagePath != null && File(imagePath!).existsSync()) {
+      return CircleAvatar(
+        radius: 45,
+        backgroundImage: FileImage(File(imagePath!)),
+      );
     }
+
+    return const CircleAvatar(
+      radius: 45,
+      backgroundImage: AssetImage("assets/images/profile.png"),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
+
       appBar: AppBar(
         title: const Text("Profile"),
-        backgroundColor: Colors.green,
+        centerTitle: true,
       ),
+
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            /// 👤 PROFILE IMAGE
+
+            const SizedBox(height: 20),
+
+            /// PROFILE IMAGE
             GestureDetector(
               onTap: pickImage,
-              child: CircleAvatar(
-                radius: 50,
-                backgroundImage: imagePath != null
-                    ? (kIsWeb ? NetworkImage(imagePath!) : FileImage(File(imagePath!)) as ImageProvider)
-                    : null,
-                child: imagePath == null ? const Icon(Icons.person, size: 50) : null,
-              ),
+              child: profileImage(),
             ),
+
             const SizedBox(height: 10),
 
-            /// 👤 NAME
-            Text(
-              name.isEmpty ? "No Name" : name,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            const Text(
+              "Tap to change profile picture",
+              style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
 
-            /// 📧 EMAIL
+            const SizedBox(height: 20),
+
+            /// NAME
+            Text(
+              name.isEmpty ? "User" : name,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 5),
+
+            /// EMAIL
             Text(
               email.isEmpty ? "No Email" : email,
               style: const TextStyle(color: Colors.grey),
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 5),
 
-            /// ✏ EDIT PROFILE
-            TextButton(
-              onPressed: () async {
-                bool? updated = await Navigator.push(
+            /// PHONE
+            Text(
+              phone.isEmpty ? "" : phone,
+              style: const TextStyle(color: Colors.grey),
+            ),
+
+            const SizedBox(height: 30),
+
+            /// MENU LIST
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text("Edit Profile"),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const EditProfilePage()),
+                  MaterialPageRoute(
+                    builder: (context) => const EditProfilePage(),
+                  ),
                 );
-                if (updated == true) loadProfile();
               },
-              child: const Text("Edit Profile"),
             ),
 
-            const Divider(height: 30),
-
-            /// 🔹 PREFERENCES
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "Your Preferences",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-
-            SwitchListTile(
-              title: const Text("Veg Mode"),
-              value: vegMode,
-              onChanged: (val) => setState(() => vegMode = val),
-            ),
-
-            SwitchListTile(
-              title: const Text("Show Personalized Ratings"),
-              value: personalizedRatings,
-              onChanged: (val) => setState(() => personalizedRatings = val),
-            ),
-
-            SwitchListTile(
-              title: const Text("Dark Mode"),
-              value: darkMode,
-              onChanged: (val) => setState(() => darkMode = val),
-            ),
-
-            const Divider(height: 30),
-
-            /// 🔹 FOOD DELIVERY SECTION
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "Food Delivery",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
+            const Divider(),
 
             ListTile(
-              leading: const Icon(Icons.shopping_bag_outlined),
-              title: const Text("Your Orders"),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyOrdersPage())),
+              leading: const Icon(Icons.shopping_bag),
+              title: const Text("My Orders"),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MyOrdersPage(),
+                  ),
+                );
+              },
             ),
 
+            const Divider(),
+
             ListTile(
-              leading: const Icon(Icons.location_on_outlined),
+              leading: const Icon(Icons.location_on),
               title: const Text("Address Book"),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddressBookPage())),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AddressBookPage(),
+                  ),
+                );
+              },
             ),
 
+            const Divider(),
+
             ListTile(
-              leading: const Icon(Icons.rate_review_outlined),
-              title: const Text("My Reviews"),
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReviewsPage())),
+              leading: const Icon(Icons.reviews),
+              title: const Text("Reviews"),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ReviewsPage(),
+                  ),
+                );
+              },
             ),
+
+            const Divider(),
+
+            const SizedBox(height: 30),
           ],
         ),
       ),

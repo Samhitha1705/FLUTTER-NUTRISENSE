@@ -1,7 +1,8 @@
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'nutritionist/screens/dashboard_home_page.dart';
 import 'forgot_password_email_page.dart';
 import 'registrationPage.dart';
@@ -46,12 +47,12 @@ class _LoginPageState extends State<LoginPage> {
 
       Uri url;
 
-      /// CUSTOMER LOGIN API
+      /// CUSTOMER LOGIN
       if (selectedRole == "Customer") {
         url = Uri.parse("http://192.168.100.162:8080/api/v1/customers/login");
       }
 
-      /// NUTRITIONIST LOGIN API
+      /// NUTRITIONIST LOGIN
       else {
         url = Uri.parse("http://192.168.100.162:8080/api/v1/nutritionists/login");
       }
@@ -76,7 +77,40 @@ class _LoginPageState extends State<LoginPage> {
 
       if (response.statusCode == 200) {
 
-        /// CUSTOMER DASHBOARD
+        final data = jsonDecode(response.body);
+
+        final prefs = await SharedPreferences.getInstance();
+
+        /// SAVE TOKEN
+        if (data["token"] != null) {
+          await prefs.setString("token", data["token"]);
+        }
+
+        /// SAVE CUSTOMER DATA
+        if (selectedRole == "Customer" && data["customerResponseDto"] != null) {
+
+          final customer = data["customerResponseDto"];
+
+          await prefs.setString("name", customer["firstName"] ?? "");
+          await prefs.setString("lastName", customer["lastName"] ?? "");
+          await prefs.setString("email", customer["email"] ?? "");
+          await prefs.setString("phone", customer["phone"] ?? "");
+
+        }
+
+        /// SAVE NUTRITIONIST DATA
+        if (selectedRole == "Nutritionist" && data["nutritionistResponseDto"] != null) {
+
+          final nutritionist = data["nutritionistResponseDto"];
+
+          await prefs.setString("name", nutritionist["firstName"] ?? "");
+          await prefs.setString("lastName", nutritionist["lastName"] ?? "");
+          await prefs.setString("email", nutritionist["email"] ?? "");
+          await prefs.setString("phone", nutritionist["phone"] ?? "");
+
+        }
+
+        /// NAVIGATE
         if (selectedRole == "Customer") {
 
           Navigator.pushAndRemoveUntil(
@@ -86,10 +120,8 @@ class _LoginPageState extends State<LoginPage> {
             ),
                 (route) => false,
           );
-        }
 
-        /// NUTRITIONIST DASHBOARD
-        else {
+        } else {
 
           Navigator.pushAndRemoveUntil(
             context,
@@ -98,6 +130,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
                 (route) => false,
           );
+
         }
 
       } else {
@@ -143,203 +176,205 @@ class _LoginPageState extends State<LoginPage> {
           Container(color: Colors.black.withOpacity(0.4)),
 
           Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
 
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
 
-                children: [
+                  children: [
 
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      "Login",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 5),
-
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      "Please enter your details",
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 25),
-
-                  Container(
-                    padding: const EdgeInsets.all(20),
-
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-
-                    child: Column(
-                      children: [
-
-                        /// EMAIL
-                        TextField(
-                          controller: emailController,
-                          decoration: const InputDecoration(
-                            hintText: "Email",
-                            border: UnderlineInputBorder(),
-                          ),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "Login",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
                         ),
+                      ),
+                    ),
 
-                        const SizedBox(height: 20),
+                    const SizedBox(height: 5),
 
-                        /// PASSWORD
-                        TextField(
-                          controller: passwordController,
-                          obscureText: !isPasswordVisible,
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "Please enter your details",
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
 
-                          decoration: InputDecoration(
-                            hintText: "Password",
-                            border: const UnderlineInputBorder(),
+                    const SizedBox(height: 25),
 
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                isPasswordVisible
-                                    ? Icons.visibility
-                                    : Icons.visibility_off,
+                    Container(
+                      padding: const EdgeInsets.all(20),
+
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+
+                      child: Column(
+                        children: [
+
+                          /// EMAIL
+                          TextField(
+                            controller: emailController,
+                            decoration: const InputDecoration(
+                              hintText: "Email",
+                              border: UnderlineInputBorder(),
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          /// PASSWORD
+                          TextField(
+                            controller: passwordController,
+                            obscureText: !isPasswordVisible,
+
+                            decoration: InputDecoration(
+                              hintText: "Password",
+                              border: const UnderlineInputBorder(),
+
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  isPasswordVisible
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
+                                ),
+
+                                onPressed: () {
+                                  setState(() {
+                                    isPasswordVisible = !isPasswordVisible;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          /// ROLE
+                          DropdownButtonFormField<String>(
+                            value: selectedRole,
+
+                            decoration: const InputDecoration(
+                              hintText: "Login as",
+                            ),
+
+                            items: const [
+
+                              DropdownMenuItem(
+                                value: "Customer",
+                                child: Text("Customer"),
                               ),
 
+                              DropdownMenuItem(
+                                value: "Nutritionist",
+                                child: Text("Nutritionist"),
+                              ),
+
+                            ],
+
+                            onChanged: (value) {
+                              setState(() {
+                                selectedRole = value;
+                              });
+                            },
+                          ),
+
+                          /// FORGOT PASSWORD
+                          Align(
+                            alignment: Alignment.centerRight,
+
+                            child: TextButton(
                               onPressed: () {
-                                setState(() {
-                                  isPasswordVisible = !isPasswordVisible;
-                                });
+
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                    const ForgotPasswordEmailPage(),
+                                  ),
+                                );
+
                               },
+
+                              child: const Text(
+                                "Forgot Password?",
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 13,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
 
-                        const SizedBox(height: 20),
+                          const SizedBox(height: 10),
 
-                        /// ROLE DROPDOWN
-                        DropdownButtonFormField<String>(
-                          value: selectedRole,
+                          /// LOGIN BUTTON
+                          SizedBox(
+                            width: double.infinity,
+                            height: 45,
 
-                          decoration: const InputDecoration(
-                            hintText: "Login as",
+                            child: ElevatedButton(
+
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+
+                              onPressed: isLoading ? null : loginUser,
+
+                              child: isLoading
+                                  ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                                  : const Text(
+                                "Login",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
                           ),
 
-                          items: const [
+                          const SizedBox(height: 10),
 
-                            DropdownMenuItem(
-                              value: "Customer",
-                              child: Text("Customer"),
-                            ),
-
-                            DropdownMenuItem(
-                              value: "Nutritionist",
-                              child: Text("Nutritionist"),
-                            ),
-
-                          ],
-
-                          onChanged: (value) {
-                            setState(() {
-                              selectedRole = value;
-                            });
-                          },
-                        ),
-
-                        /// FORGOT PASSWORD
-                        Align(
-                          alignment: Alignment.centerRight,
-
-                          child: TextButton(
+                          /// REGISTER
+                          TextButton(
                             onPressed: () {
 
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) =>
-                                  const ForgotPasswordEmailPage(),
+                                  builder: (_) => const Registrationpage(),
                                 ),
                               );
 
                             },
 
                             child: const Text(
-                              "Forgot Password?",
-                              style: TextStyle(
-                                color: Colors.red,
-                                fontSize: 13,
-                              ),
+                              "Create an account",
+                              style: TextStyle(color: Colors.red),
                             ),
                           ),
-                        ),
 
-                        const SizedBox(height: 10),
-
-                        /// LOGIN BUTTON
-                        SizedBox(
-                          width: double.infinity,
-                          height: 45,
-
-                          child: ElevatedButton(
-
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-
-                            onPressed: isLoading ? null : loginUser,
-
-                            child: isLoading
-                                ? const CircularProgressIndicator(
-                              color: Colors.white,
-                            )
-                                : const Text(
-                              "Login",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 10),
-
-                        /// CREATE ACCOUNT
-                        TextButton(
-                          onPressed: () {
-
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const Registrationpage(),
-                              ),
-                            );
-
-                          },
-
-                          child: const Text(
-                            "Create an account",
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ),
-
-                      ],
-                    ),
-                  )
-                ],
+                        ],
+                      ),
+                    )
+                  ],
+                ),
               ),
             ),
           ),
