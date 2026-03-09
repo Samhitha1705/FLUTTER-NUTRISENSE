@@ -152,11 +152,16 @@
 // }
 
 
+// Complete Updated Subscription Plans UI with All Features
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+
+void main() {
+  runApp(const MaterialApp(home: PlansScreen()));
+}
 
 class PlansScreen extends StatefulWidget {
   const PlansScreen({super.key});
@@ -165,7 +170,7 @@ class PlansScreen extends StatefulWidget {
   State<PlansScreen> createState() => _PlansScreenState();
 }
 
-class _PlansScreenState extends State<PlansScreen> {
+class _PlansScreenState extends State<PlansScreen> with TickerProviderStateMixin {
   final String baseUrl = "http://192.168.100.162:8080";
 
   String currentPlan = "NONE";
@@ -178,45 +183,45 @@ class _PlansScreenState extends State<PlansScreen> {
   List<Plan> publicPlans = [];
 
   bool isLoading = true;
+  late TabController tabController;
 
   @override
   void initState() {
     super.initState();
+    tabController = TabController(length: 5, vsync: this);
     loadData();
   }
 
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString("token");
+    final token = prefs.getString("token");
+    print("DEBUG: Loaded token: $token");
+    return token;
   }
 
-  // ================= LOAD DATA ================= //
   Future<void> loadData() async {
+    print("DEBUG: Loading data...");
     setState(() => isLoading = true);
     await fetchCurrentMembership();
     await fetchPrivatePlans();
     await fetchPublicPlans();
+    filterAvailablePlans();
     setState(() => isLoading = false);
+    print("DEBUG: Data loading complete.");
   }
 
-  // ================= FETCH CURRENT PLAN ================= //
   Future<void> fetchCurrentMembership() async {
     final token = await getToken();
     if (token == null) return;
 
-    print("================= TOKEN PLANS =================");
-    print(token);
-    print("=================================================");
-
+    print("DEBUG: Fetching current membership...");
     final response = await http.get(
       Uri.parse("$baseUrl/api/v1/customers/membership"),
       headers: {"Authorization": "Bearer $token"},
     );
 
-    print("================= CURRENT PLANS =================");
-    print(response.body);
-    print("Status code: ${response.statusCode}");
-    print("=================================================");
+    print("DEBUG: Current membership response: ${response.body}");
+    print("DEBUG: Status code: ${response.statusCode}");
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -226,24 +231,23 @@ class _PlansScreenState extends State<PlansScreen> {
           currentPlan = plan["planType"] ?? "NONE";
           currentPlanEnd = DateTime.tryParse(plan["endDate"] ?? "");
         });
+        print("DEBUG: Current plan: $currentPlan, ends on: $currentPlanEnd");
       }
     }
   }
 
-  // ================= FETCH PRIVATE PLANS ================= //
   Future<void> fetchPrivatePlans() async {
     final token = await getToken();
     if (token == null) return;
 
+    print("DEBUG: Fetching private plans...");
     final response = await http.get(
       Uri.parse("$baseUrl/api/v1/customers/membership"),
       headers: {"Authorization": "Bearer $token"},
     );
 
-    print("================= PRIVATE PLANS =================");
-    print(response.body);
-    print("Status code: ${response.statusCode}");
-    print("=================================================");
+    print("DEBUG: Private plans response: ${response.body}");
+    print("DEBUG: Status code: ${response.statusCode}");
 
     if (response.statusCode == 200) {
       final list = jsonDecode(response.body) as List;
@@ -266,19 +270,18 @@ class _PlansScreenState extends State<PlansScreen> {
           activePlans.add(plan);
         }
       }
+
+      print(
+          "DEBUG: Active: ${activePlans.length}, Expired: ${expiredPlans.length}, Cancelled: ${cancelledPlans.length}, History: ${historyPlans.length}");
     }
   }
 
-  // ================= FETCH PUBLIC PLANS ================= //
   Future<void> fetchPublicPlans() async {
-    final response = await http.get(
-      Uri.parse("$baseUrl/api/v1/membership/plans"),
-    );
+    print("DEBUG: Fetching public plans...");
+    final response = await http.get(Uri.parse("$baseUrl/api/v1/membership/plans"));
 
-    print("================= PUBLIC PLANS =================");
-    print(response.body);
-    print("Status code: ${response.statusCode}");
-    print("=================================================");
+    print("DEBUG: Public plans response: ${response.body}");
+    print("DEBUG: Status code: ${response.statusCode}");
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -286,16 +289,25 @@ class _PlansScreenState extends State<PlansScreen> {
       setState(() {
         publicPlans = list.map<Plan>((e) => Plan.fromJson(e)).toList();
       });
+      print("DEBUG: Public plans loaded: ${publicPlans.length}");
     }
   }
 
-  // ================= CANCEL PLAN ================= //
+  void filterAvailablePlans() {
+    print("DEBUG: Filtering available plans to exclude active plan: $currentPlan");
+    final beforeCount = publicPlans.length;
+    publicPlans = publicPlans.where((p) => p.planType != currentPlan).toList();
+    print(
+        "DEBUG: Available plans filtered: before=$beforeCount, after=${publicPlans.length}");
+  }
+
   Future<void> cancelPlan(Plan plan) async {
+    print("DEBUG: Attempting to cancel plan: ${plan.displayName}");
     bool confirmed = await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Confirm Cancel"),
-        content: Text("Do you want to cancel ${plan.displayName}?"),
+      builder: (_) => AlertDialog(
+        title: const Text("Cancel Plan"),
+        content: Text("Are you sure you want to cancel ${plan.displayName}?"),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("No")),
           ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text("Yes")),
@@ -303,7 +315,10 @@ class _PlansScreenState extends State<PlansScreen> {
       ),
     );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      print("DEBUG: Cancel plan cancelled by user.");
+      return;
+    }
 
     final token = await getToken();
     if (token == null) return;
@@ -313,53 +328,25 @@ class _PlansScreenState extends State<PlansScreen> {
       headers: {"Authorization": "Bearer $token"},
     );
 
-    print("================= CANCEL PLAN =================");
-    print(response.body);
-    print("Status code: ${response.statusCode}");
-    print("=================================================");
+    print("DEBUG: Cancel plan response: ${response.body}");
+    print("DEBUG: Status code: ${response.statusCode}");
 
     if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("${plan.displayName} cancelled successfully")),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("${plan.displayName} cancelled successfully")));
       loadData();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to cancel ${plan.displayName}")),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Failed to cancel ${plan.displayName}")));
     }
   }
 
-  // ================= VIEW PLAN ================= //
-  Future<void> viewPlan(Plan plan) async {
-    await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(plan.displayName),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Price: ₹${plan.price}"),
-            Text("Duration: ${plan.planDuration}"),
-            Text("Start: ${plan.startDate.isNotEmpty ? plan.startDate : '-'}"),
-            Text("Expiry: ${plan.endDate.isNotEmpty ? plan.endDate : '-'}"),
-            Text("Status: ${plan.status}"),
-          ],
-        ),
-        actions: [
-          ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text("OK"))
-        ],
-      ),
-    );
-  }
-
-  // ================= BUY PLAN ================= //
   Future<void> buyPlan(Plan plan) async {
+    print("DEBUG: Attempting to buy plan: ${plan.displayName}");
     bool confirmed = await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Confirm Purchase"),
+        title: Text("Confirm Purchase"),
         content: Text("Do you want to buy ${plan.displayName}?"),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
@@ -368,52 +355,46 @@ class _PlansScreenState extends State<PlansScreen> {
       ),
     );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      print("DEBUG: Purchase cancelled by user.");
+      return;
+    }
 
     final token = await getToken();
     if (token == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Token not found, login first")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Token not found, login first")));
       return;
     }
 
     final now = DateTime.now();
-    int monthsToAdd;
+    DateTime endDate;
     switch (plan.planType) {
       case "ONE_MONTH":
-        monthsToAdd = 1;
+        endDate = DateTime(now.year, now.month + 1, now.day);
         break;
       case "THREE_MONTHS":
-        monthsToAdd = 3;
+        endDate = DateTime(now.year, now.month + 3, now.day);
         break;
       case "SIX_MONTHS":
-        monthsToAdd = 6;
+        endDate = DateTime(now.year, now.month + 6, now.day);
         break;
       case "TWELVE_MONTHS":
-        monthsToAdd = 12;
+        endDate = DateTime(now.year + 1, now.month, now.day);
         break;
       default:
-        monthsToAdd = 1;
+        endDate = DateTime(now.year, now.month + 1, now.day);
     }
 
-    int targetYear = now.year + ((now.month + monthsToAdd - 1) ~/ 12);
-    int targetMonth = ((now.month + monthsToAdd - 1) % 12) + 1;
-    int targetDay = now.day;
-    int lastDayOfTargetMonth = DateTime(targetYear, targetMonth + 1, 0).day;
-    if (targetDay > lastDayOfTargetMonth) targetDay = lastDayOfTargetMonth;
-
-    final endDate = DateTime(targetYear, targetMonth, targetDay);
     final dateFormatter = DateFormat('yyyy-MM-dd');
-    final startDate = dateFormatter.format(now);
-    final endDateStr = dateFormatter.format(endDate);
+    final payload = {
+      "planType": plan.planType,
+      "startDate": dateFormatter.format(now),
+      "endDate": dateFormatter.format(endDate),
+    };
 
-    final payload = {"planType": plan.planType, "startDate": startDate, "endDate": endDateStr};
-
-    print("================= BUY PLAN =================");
-    print("TOKEN: $token");
-    print("Request payload: $payload");
-    print("JSON: ${jsonEncode(payload)}");
-    print("=================================================");
+    print("DEBUG: Payload JSON: ${jsonEncode(payload)}");
+    print("DEBUG: Token: $token");
 
     try {
       final response = await http.post(
@@ -422,9 +403,8 @@ class _PlansScreenState extends State<PlansScreen> {
         body: jsonEncode(payload),
       );
 
-      print("Response body: ${response.body}");
-      print("Status code: ${response.statusCode}");
-      print("=================================================");
+      print("DEBUG: Buy plan response: ${response.body}");
+      print("DEBUG: Status code: ${response.statusCode}");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         ScaffoldMessenger.of(context)
@@ -435,21 +415,53 @@ class _PlansScreenState extends State<PlansScreen> {
             .showSnackBar(SnackBar(content: Text("Failed to purchase ${plan.displayName}")));
       }
     } catch (e) {
-      print("Error purchasing plan: $e");
+      print("DEBUG: Network error: $e");
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text("Network error, try again")));
     }
   }
 
-  // ================= PLAN CARD ================= //
-  Widget buildPlanCard(Plan plan, {bool isPublic = false}) {
+  void viewPlan(Plan plan) {
+    print("DEBUG: Viewing plan: ${plan.displayName}");
     final now = DateTime.now();
-    bool expired = plan.isExpired(now);
-    String badge = "";
+    int? remainingDays;
+    if (!plan.isExpired(now) && plan.endDate.isNotEmpty) {
+      remainingDays = DateTime.parse(plan.endDate).difference(now).inDays;
+    }
 
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(plan.displayName),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Price: ₹${plan.price}"),
+            Text("Duration: ${plan.planDuration}"),
+            if (plan.startDate.isNotEmpty) Text("Start: ${formatDate(plan.startDate)}"),
+            if (plan.endDate.isNotEmpty) Text("Expiry: ${formatDate(plan.endDate)}"),
+            Text("Status: ${plan.status}"),
+            if (remainingDays != null) Text("Remaining days: $remainingDays"),
+          ],
+        ),
+        actions: [ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text("Close"))],
+      ),
+    );
+  }
+
+  Widget buildPlanCard(Plan plan,
+      {bool isActive = false, bool isPublic = false, bool isExpiredOrCancelled = false}) {
+    String badge = "";
     if (plan.status == "CANCELLED") badge = "CANCELLED";
-    else if (expired) badge = "EXPIRED";
+    else if (plan.isExpired(DateTime.now())) badge = "EXPIRED";
     else if (plan.planType == currentPlan) badge = "ACTIVE";
+
+    Color badgeColor = badge == "ACTIVE"
+        ? Colors.green
+        : badge == "EXPIRED"
+            ? Colors.red
+            : Colors.orange;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 10),
@@ -460,38 +472,126 @@ class _PlansScreenState extends State<PlansScreen> {
             Text(plan.displayName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             if (badge.isNotEmpty)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                    color: badge == "ACTIVE"
-                        ? Colors.green
-                        : badge == "EXPIRED"
-                            ? Colors.red
-                            : Colors.orange,
-                    borderRadius: BorderRadius.circular(20)),
-                child: Text(badge, style: const TextStyle(color: Colors.white)),
-              )
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(color: badgeColor, borderRadius: BorderRadius.circular(20)),
+                  child: Text(badge, style: const TextStyle(color: Colors.white)))
           ]),
           const SizedBox(height: 8),
           Text("₹${plan.price}", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           Text("Duration: ${plan.planDuration}"),
-          const SizedBox(height: 8),
           if (plan.startDate.isNotEmpty) Text("Start: ${formatDate(plan.startDate)}"),
           if (plan.endDate.isNotEmpty) Text("Expiry: ${formatDate(plan.endDate)}"),
           const SizedBox(height: 12),
           Row(
             children: [
-              if (!isPublic || expired || plan.status == "CANCELLED")
+              if (isPublic)
+                Expanded(child: ElevatedButton(onPressed: () => buyPlan(plan), child: const Text("Buy Plan"))),
+              if (isActive) ...[
+                Expanded(child: ElevatedButton(onPressed: () => viewPlan(plan), child: const Text("View Plan"))),
+                const SizedBox(width: 10),
                 Expanded(
                     child: ElevatedButton(
-                        onPressed: () => viewPlan(plan), child: const Text("View Plan"))),
-              if (badge == "ACTIVE")
-                Expanded(
-                    child: ElevatedButton(
-                        onPressed: () => cancelPlan(plan), child: const Text("Cancel Plan"))),
-              if (isPublic) Expanded(child: ElevatedButton(onPressed: () => buyPlan(plan), child: const Text("Buy Plan"))),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                        onPressed: () => cancelPlan(plan),
+                        child: const Text("Cancel Plan")))
+              ],
+              if (isExpiredOrCancelled)
+                Expanded(child: ElevatedButton(onPressed: () => viewPlan(plan), child: const Text("View Plan")))
             ],
           )
         ]),
+      ),
+    );
+  }
+
+  Widget buildPlanList(List<Plan> plans,
+      {bool isActive = false, bool isPublic = false, bool isExpiredOrCancelled = false}) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: plans.length,
+      itemBuilder: (_, i) {
+        final plan = plans[i];
+        return TweenAnimationBuilder<Offset>(
+          tween: Tween(begin: const Offset(0, 0.1), end: Offset.zero),
+          duration: const Duration(milliseconds: 300),
+          child: buildPlanCard(plan,
+              isActive: isActive, isPublic: isPublic, isExpiredOrCancelled: isExpiredOrCancelled),
+          builder: (_, offset, child) => Transform.translate(offset: offset, child: child),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 5,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Subscription Plans"),
+          bottom: TabBar(
+            controller: tabController,
+            isScrollable: true,
+            tabs: const [
+              Tab(text: "Active"),
+              Tab(text: "Available"),
+              Tab(text: "Expired"),
+              Tab(text: "Cancelled"),
+              Tab(text: "History"),
+            ],
+          ),
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () {
+            if (publicPlans.isNotEmpty) {
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: const Text("Subscribe to a Plan"),
+                    content: SizedBox(
+                      width: double.maxFinite,
+                      child: ListView(
+                        shrinkWrap: true,
+                        children: publicPlans
+                            .map((plan) => ListTile(
+                                  title: Text(plan.displayName),
+                                  subtitle: Text("₹${plan.price} | ${plan.planDuration}"),
+                                  trailing: ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      buyPlan(plan);
+                                    },
+                                    child: const Text("Buy"),
+                                  ),
+                                ))
+                            .toList(),
+                      ),
+                    ),
+                  );
+                },
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("No public plans available")),
+              );
+            }
+          },
+          label: const Text("Add Plan"),
+          icon: const Icon(Icons.add),
+        ),
+        body: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : TabBarView(
+                controller: tabController,
+                children: [
+                  buildPlanList(activePlans, isActive: true),
+                  buildPlanList(publicPlans, isPublic: true),
+                  buildPlanList(expiredPlans, isExpiredOrCancelled: true),
+                  buildPlanList(cancelledPlans, isExpiredOrCancelled: true),
+                  buildPlanList(historyPlans, isExpiredOrCancelled: true),
+                ],
+              ),
       ),
     );
   }
@@ -503,91 +603,8 @@ class _PlansScreenState extends State<PlansScreen> {
       return date;
     }
   }
-
-  // ================= UI ================= //
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Subscription Plans"),
-        centerTitle: true,
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16),
-              child: ListView(
-                children: [
-                  if (activePlans.isNotEmpty) ...[
-                    const Text("Active Plans", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                    ...activePlans.map((plan) => buildPlanCard(plan)),
-                  ],
-                  if (publicPlans.isNotEmpty) ...[
-                    const SizedBox(height: 20),
-                    const Text("Available Plans", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                    ...publicPlans.map((plan) => buildPlanCard(plan, isPublic: true)),
-                  ],
-                  if (expiredPlans.isNotEmpty) ...[
-                    const SizedBox(height: 20),
-                    const Text("Expired Plans", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                    ...expiredPlans.map((plan) => buildPlanCard(plan)),
-                  ],
-                  if (cancelledPlans.isNotEmpty) ...[
-                    const SizedBox(height: 20),
-                    const Text("Cancelled Plans", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                    ...cancelledPlans.map((plan) => buildPlanCard(plan)),
-                  ],
-                  if (historyPlans.isNotEmpty) ...[
-                    const SizedBox(height: 20),
-                    const Text("Plan History", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                    ...historyPlans.map((plan) => buildPlanCard(plan)),
-                  ],
-                ],
-              ),
-            ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          if (publicPlans.isNotEmpty) {
-            showDialog(
-              context: context,
-              builder: (context) {
-                return AlertDialog(
-                  title: const Text("Subscribe to a Plan"),
-                  content: SizedBox(
-                    width: double.maxFinite,
-                    child: ListView(
-                      shrinkWrap: true,
-                      children: publicPlans
-                          .map((plan) => ListTile(
-                                title: Text(plan.displayName),
-                                subtitle: Text("₹${plan.price} | ${plan.planDuration}"),
-                                trailing: ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    buyPlan(plan);
-                                  },
-                                  child: const Text("Buy"),
-                                ),
-                              ))
-                          .toList(),
-                    ),
-                  ),
-                );
-              },
-            );
-          } else {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(const SnackBar(content: Text("No public plans available")));
-          }
-        },
-        label: const Text("Add Plan"),
-        icon: const Icon(Icons.add),
-      ),
-    );
-  }
 }
 
-// ================= PLAN MODEL ================= //
 class Plan {
   final int id;
   final String planType;
@@ -624,9 +641,8 @@ class Plan {
 
   bool isExpired(DateTime now) {
     try {
-      final expiry = DateTime.parse(endDate);
-      return expiry.isBefore(now);
-    } catch (e) {
+      return DateTime.parse(endDate).isBefore(now);
+    } catch (_) {
       return false;
     }
   }
