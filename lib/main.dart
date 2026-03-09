@@ -1,14 +1,16 @@
 import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import 'plans_screen.dart';
 import 'registrationPage.dart';
 import 'statefull.dart';
 import 'review_provider.dart';
+import './plans_screen.dart';
 import 'routes.dart';
 import 'login_page.dart';   // ✅ ADDED THIS
 
 void main() {
+  
   runApp(
     MultiProvider(
       providers: [
@@ -57,6 +59,7 @@ class SplashScreen extends StatelessWidget {
       ),
       duration: 2000,
       backgroundColor: const Color(0xFFE23744),
+      // nextScreen: PlansScreen(),
       nextScreen: const LoginPage(),   // ✅ Now comes from login_page.dart
     );
   }

@@ -22,7 +22,7 @@ dependencies:
   image_picker: ^1.1.2
 
   # ---------------- NETWORK ----------------
-  http: ^1.2.2
+  http: ^1.2.1
 
   # ---------------- UI ----------------
   cupertino_icons: ^1.0.8
@@ -51,6 +51,7 @@ dependencies:
 
   # ---------------- APP ICON ----------------
   flutter_launcher_icons: ^0.14.4
+  xml: ^6.6.1
 
 dev_dependencies:
   flutter_test:
