@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../services/profile_service.dart';
 import 'edit_profile_page.dart';
 
@@ -57,12 +58,10 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-
       appBar: AppBar(
         title: const Text("My Profile"),
         backgroundColor: const Color(0xFF1B4332),
       ),
-
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : profile == null
@@ -88,19 +87,24 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
           ),
-
           const SizedBox(height: 10),
 
-          _buildCardItem(Icons.person, "First Name", profile!['firstName']),
-          _buildCardItem(Icons.person_outline, "Last Name", profile!['lastName']),
+          _buildCardItem(
+              Icons.person, "First Name", profile!['firstName']),
+          _buildCardItem(Icons.person_outline, "Last Name",
+              profile!['lastName']),
           _buildCardItem(Icons.email, "Email", profile!['email']),
           _buildCardItem(Icons.phone, "Phone", profile!['phone']),
-          _buildCardItem(Icons.school, "Qualification", profile!['qualification']),
-          _buildCardItem(Icons.book, "Specialization", profile!['specialization']),
-          _buildCardItem(Icons.work, "Experience", profile!['experience']),
-          _buildCardItem(Icons.badge, "Aadhaar Ref", profile!['aadhaarRef']),
-          _buildCardItem(Icons.access_time, "Created At", profile!['createdAt']),
-
+          _buildCardItem(Icons.school, "Qualification",
+              profile!['qualification']),
+          _buildCardItem(Icons.book, "Specialization",
+              profile!['specialization']),
+          _buildCardItem(
+              Icons.work, "Experience", profile!['experience']),
+          _buildCardItem(
+              Icons.badge, "Aadhaar Ref", profile!['aadhaarRef']),
+          _buildCardItem(
+              Icons.access_time, "Created At", profile!['createdAt']),
           const SizedBox(height: 30),
         ],
       ),
@@ -108,6 +112,8 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildHeader() {
+    String? photoUrl = profile!['profilePhoto'];
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 30),
       decoration: const BoxDecoration(
@@ -122,19 +128,43 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       child: Column(
         children: [
-          CircleAvatar(
-            radius: 55,
-            backgroundColor: Colors.white,
-            backgroundImage: profile!['profilePhoto'] != null
-                ? NetworkImage(profile!['profilePhoto'])
-                : null,
-            child: profile!['profilePhoto'] == null
-                ? const Icon(Icons.person, size: 55, color: Colors.grey)
-                : null,
+          GestureDetector(
+            onTap: () {
+              if (photoUrl != null && photoUrl.isNotEmpty) {
+                showDialog(
+                  context: context,
+                  builder: (_) => Dialog(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    child: SizedBox(
+                      width: 200,
+                      height: 200,
+                      child: CachedNetworkImage(
+                        imageUrl: photoUrl,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => const Center(
+                            child: CircularProgressIndicator()),
+                        errorWidget: (context, url, error) =>
+                        const Icon(Icons.error,
+                            size: 50, color: Colors.red),
+                      ),
+                    ),
+                  ),
+                );
+              }
+            },
+            child: CircleAvatar(
+              radius: 55,
+              backgroundColor: Colors.white,
+              backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
+                  ? CachedNetworkImageProvider(photoUrl)
+                  : null,
+              child: (photoUrl == null || photoUrl.isEmpty)
+                  ? const Icon(Icons.person, size: 55, color: Colors.grey)
+                  : null,
+            ),
           ),
-
           const SizedBox(height: 12),
-
           Text(
             "${profile!['firstName'] ?? ''} ${profile!['lastName'] ?? ''}",
             style: const TextStyle(
@@ -143,9 +173,7 @@ class _ProfilePageState extends State<ProfilePage> {
               fontWeight: FontWeight.bold,
             ),
           ),
-
           const SizedBox(height: 4),
-
           Text(
             profile!['email'] ?? "",
             style: const TextStyle(
@@ -165,17 +193,14 @@ class _ProfilePageState extends State<ProfilePage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-
       child: ListTile(
         leading: Icon(icon, color: const Color(0xFF1B4332)),
-
         title: Text(
           label,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
           ),
         ),
-
         subtitle: Text(value != null ? value.toString() : "-"),
       ),
     );
