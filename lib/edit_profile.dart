@@ -56,7 +56,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
               title: const Text('Gallery'),
               onTap: () async {
                 Navigator.pop(context);
-                final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+                final picked =
+                    await ImagePicker().pickImage(source: ImageSource.gallery);
                 if (picked != null) {
                   setState(() => imageFile = File(picked.path));
                   await prefs.setString("imagePath", picked.path);
@@ -68,7 +69,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
               title: const Text('Camera'),
               onTap: () async {
                 Navigator.pop(context);
-                final picked = await ImagePicker().pickImage(source: ImageSource.camera);
+                final picked =
+                    await ImagePicker().pickImage(source: ImageSource.camera);
                 if (picked != null) {
                   setState(() => imageFile = File(picked.path));
                   await prefs.setString("imagePath", picked.path);
@@ -126,8 +128,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
               onTap: pickImage,
               child: CircleAvatar(
                 radius: 50,
-                backgroundImage: imageFile != null ? FileImage(imageFile!) : null,
-                child: imageFile == null ? const Icon(Icons.person, size: 50) : null,
+                backgroundImage:
+                    imageFile != null ? FileImage(imageFile!) : null,
+                child: imageFile == null
+                    ? const Icon(Icons.person, size: 50)
+                    : null,
               ),
             ),
             const SizedBox(height: 20),
@@ -161,7 +166,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
             // Gender dropdown
             DropdownButtonFormField<String>(
-              value: genderOptions.contains(gender) ? gender : null,
+              initialValue: genderOptions.contains(gender) ? gender : null,
               items: genderOptions
                   .map((g) => DropdownMenuItem(value: g, child: Text(g)))
                   .toList(),

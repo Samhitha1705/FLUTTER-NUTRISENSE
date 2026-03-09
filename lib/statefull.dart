@@ -1,5 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:my_app/notification_page.dart';
+import 'package:my_app/plans_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'homePage.dart';
@@ -8,7 +12,6 @@ import 'mealsScreen.dart';
 import 'liveCoach.dart';
 import 'expandWidget.dart';
 import 'my_orders.dart';
-import 'main.dart';
 import 'address_book_page.dart';
 import 'login_page.dart';
 
@@ -42,13 +45,11 @@ class _StatefulDashboardState extends State<StatefulDashboard> {
   Future loadDrawerProfile() async {
     final prefs = await SharedPreferences.getInstance();
 
-
     Set<String> keys = prefs.getKeys();
 
     for (String key in keys) {
       print('$key : ${prefs.get(key)}');
     }
-
 
     setState(() {
       userName = prefs.getString("name") ?? "User Name";
@@ -62,6 +63,46 @@ class _StatefulDashboardState extends State<StatefulDashboard> {
       appBar: AppBar(
         title: const Text("NutriSense"),
         backgroundColor: Colors.green,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const NotificationPage(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+              onPressed: () {
+                showDialog(
+                    context: context,
+                    builder: (cxt) {
+                      return AlertDialog(
+                        title: Text("Logout"),
+                        content: Text("You want to Logout?"),
+                        actions: [
+                          TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: Text("No")),
+                          TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pushAndRemoveUntil(
+                                    MaterialPageRoute(
+                                        builder: (cxt) => LoginPage()),
+                                    (route) => false);
+                              },
+                              child: Text("Yes"))
+                        ],
+                      );
+                    });
+              },
+              icon: Icon(Icons.logout_outlined))
+        ],
       ),
 
       // ---------------- DRAWER ----------------
@@ -90,13 +131,15 @@ class _StatefulDashboardState extends State<StatefulDashboard> {
                           ? FileImage(File(userImage!))
                           : null,
                       child: userImage == null
-                          ? const Icon(Icons.person, size: 40, color: Colors.white)
+                          ? const Icon(Icons.person,
+                              size: 40, color: Colors.white)
                           : null,
                     ),
                     const SizedBox(height: 10),
                     Text(
                       userName,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 5),
                     const Text(
@@ -121,6 +164,15 @@ class _StatefulDashboardState extends State<StatefulDashboard> {
                 },
               ),
 
+              ListTile(
+                leading: const Icon(Icons.subscriptions),
+                title: const Text("Your Subscriptions"),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (cxt) => PlansScreen()),
+                  );
+                },
+              ),
               // 📍 Address Book
               ListTile(
                 leading: const Icon(Icons.location_on_outlined),
@@ -138,11 +190,29 @@ class _StatefulDashboardState extends State<StatefulDashboard> {
                 leading: const Icon(Icons.logout),
                 title: const Text("Logout"),
                 onTap: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (_) => const LoginPage()),
-                        (route) => false,
-                  );
+                  showDialog(
+                      context: context,
+                      builder: (cxt) {
+                        return AlertDialog(
+                          title: Text("Logout"),
+                          content: Text("You want to Logout?"),
+                          actions: [
+                            TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Text("No")),
+                            TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pushAndRemoveUntil(
+                                      MaterialPageRoute(
+                                          builder: (cxt) => LoginPage()),
+                                      (route) => false);
+                                },
+                                child: Text("Yes"))
+                          ],
+                        );
+                      });
                 },
               ),
             ],
@@ -167,10 +237,13 @@ class _StatefulDashboardState extends State<StatefulDashboard> {
           });
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: "Home"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined), label: "Home"),
           BottomNavigationBarItem(icon: Icon(Icons.food_bank), label: "Foods"),
-          BottomNavigationBarItem(icon: Icon(Icons.restaurant_menu), label: "Meals"),
-          BottomNavigationBarItem(icon: Icon(Icons.support_agent), label: "Live Coach"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.restaurant_menu), label: "Meals"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.support_agent), label: "Live Coach"),
         ],
       ),
     );

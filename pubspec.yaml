@@ -52,6 +52,8 @@ dependencies:
   # ---------------- APP ICON ----------------
   flutter_launcher_icons: ^0.14.4
 
+  get: ^4.7.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

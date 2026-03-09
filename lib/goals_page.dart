@@ -9,7 +9,6 @@ class GoalsPage extends StatefulWidget {
 }
 
 class _GoalsPageState extends State<GoalsPage> {
-
   String? selectedGoal;
   String? activityLevel;
 
@@ -63,9 +62,8 @@ class _GoalsPageState extends State<GoalsPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-
             DropdownButtonFormField<String>(
-              value: selectedGoal == "" ? null : selectedGoal,
+              initialValue: selectedGoal == "" ? null : selectedGoal,
               decoration: const InputDecoration(
                 labelText: "Select Health Goal",
                 border: OutlineInputBorder(),
@@ -83,11 +81,9 @@ class _GoalsPageState extends State<GoalsPage> {
                 saveGoals();
               },
             ),
-
             const SizedBox(height: 25),
-
             DropdownButtonFormField<String>(
-              value: activityLevel == "" ? null : activityLevel,
+              initialValue: activityLevel == "" ? null : activityLevel,
               decoration: const InputDecoration(
                 labelText: "Activity Level",
                 border: OutlineInputBorder(),

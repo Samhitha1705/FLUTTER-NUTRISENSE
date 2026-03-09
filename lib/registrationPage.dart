@@ -11,7 +11,6 @@ class Registrationpage extends StatefulWidget {
 }
 
 class _RegistrationpageState extends State<Registrationpage> {
-
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final emailController = TextEditingController();
@@ -27,19 +26,18 @@ class _RegistrationpageState extends State<Registrationpage> {
   String? selectedRole;
 
   bool isValidPassword(String password) {
-    final regex = RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!]).{8,}$');
+    final regex =
+        RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!]).{8,}$');
     return regex.hasMatch(password);
   }
 
   Future<void> registerUser() async {
-
     if (firstNameController.text.isEmpty ||
         lastNameController.text.isEmpty ||
         emailController.text.isEmpty ||
         passwordController.text.isEmpty ||
         phoneController.text.isEmpty ||
         selectedRole == null) {
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please fill all required fields")),
       );
@@ -51,12 +49,10 @@ class _RegistrationpageState extends State<Registrationpage> {
     });
 
     try {
-
       Uri url;
       Map<String, dynamic> body;
 
       if (selectedRole == "Customer") {
-
         url = Uri.parse("http://192.168.100.162:8080/api/v1/customers");
 
         body = {
@@ -67,7 +63,6 @@ class _RegistrationpageState extends State<Registrationpage> {
           "phone": phoneController.text
         };
       } else {
-
         url = Uri.parse("http://192.168.100.162:8080/api/v1/nutritionists");
 
         body = {
@@ -93,7 +88,6 @@ class _RegistrationpageState extends State<Registrationpage> {
       if (response.statusCode == 200 ||
           response.statusCode == 201 ||
           response.statusCode == 202) {
-
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -107,19 +101,15 @@ class _RegistrationpageState extends State<Registrationpage> {
             ),
           ),
         );
-
       } else {
-
         String errorMessage = "Registration failed";
 
         try {
-
           final data = jsonDecode(response.body);
 
           if (data["message"] != null) {
             errorMessage = data["message"];
           }
-
         } catch (e) {
           errorMessage = response.body;
         }
@@ -128,13 +118,10 @@ class _RegistrationpageState extends State<Registrationpage> {
           SnackBar(content: Text(errorMessage)),
         );
       }
-
     } catch (e) {
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Network error: $e")),
       );
-
     }
 
     setState(() {
@@ -144,29 +131,22 @@ class _RegistrationpageState extends State<Registrationpage> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       body: Stack(
         children: [
-
           SizedBox.expand(
             child: Image.asset(
               "assets/images/food_bg.jpg",
               fit: BoxFit.cover,
             ),
           ),
-
           Container(color: Colors.black.withOpacity(0.6)),
-
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-
               child: Column(
                 children: [
-
                   const SizedBox(height: 80),
-
                   const Text(
                     "Create Account",
                     style: TextStyle(
@@ -174,51 +154,40 @@ class _RegistrationpageState extends State<Registrationpage> {
                         fontWeight: FontWeight.bold,
                         color: Colors.white),
                   ),
-
                   const SizedBox(height: 40),
-
                   Container(
                     padding: const EdgeInsets.all(20),
-
                     decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.95),
                         borderRadius: BorderRadius.circular(20)),
-
                     child: Column(
                       children: [
-
                         TextField(
                           controller: firstNameController,
-                          decoration: const InputDecoration(labelText: "First Name"),
+                          decoration:
+                              const InputDecoration(labelText: "First Name"),
                         ),
-
                         const SizedBox(height: 15),
-
                         TextField(
                           controller: lastNameController,
-                          decoration: const InputDecoration(labelText: "Last Name"),
+                          decoration:
+                              const InputDecoration(labelText: "Last Name"),
                         ),
-
                         const SizedBox(height: 15),
-
                         TextField(
                           controller: emailController,
                           decoration: const InputDecoration(labelText: "Email"),
                         ),
-
                         const SizedBox(height: 15),
-
                         TextField(
                           controller: phoneController,
                           decoration: const InputDecoration(labelText: "Phone"),
                         ),
-
                         const SizedBox(height: 15),
-
                         DropdownButtonFormField<String>(
-                          value: selectedRole,
-                          decoration: const InputDecoration(labelText: "I am a"),
-
+                          initialValue: selectedRole,
+                          decoration:
+                              const InputDecoration(labelText: "I am a"),
                           items: const [
                             DropdownMenuItem(
                               value: "Customer",
@@ -229,46 +198,36 @@ class _RegistrationpageState extends State<Registrationpage> {
                               child: Text("Nutritionist"),
                             ),
                           ],
-
                           onChanged: (value) {
                             setState(() {
                               selectedRole = value;
                             });
                           },
                         ),
-
                         if (selectedRole == "Nutritionist") ...[
-
                           const SizedBox(height: 15),
-
                           TextField(
                             controller: qualificationController,
-                            decoration: const InputDecoration(labelText: "Qualification"),
+                            decoration: const InputDecoration(
+                                labelText: "Qualification"),
                           ),
-
                           const SizedBox(height: 15),
-
                           TextField(
                             controller: specializationController,
-                            decoration: const InputDecoration(labelText: "Specialization"),
+                            decoration: const InputDecoration(
+                                labelText: "Specialization"),
                           ),
                         ],
-
                         const SizedBox(height: 15),
-
                         TextField(
                           controller: passwordController,
                           obscureText: visiblePassword,
-
                           decoration: InputDecoration(
                             labelText: "Password",
-
                             suffixIcon: IconButton(
-                              icon: Icon(
-                                  visiblePassword
-                                      ? Icons.visibility
-                                      : Icons.visibility_off),
-
+                              icon: Icon(visiblePassword
+                                  ? Icons.visibility
+                                  : Icons.visibility_off),
                               onPressed: () {
                                 setState(() {
                                   visiblePassword = !visiblePassword;
@@ -277,42 +236,33 @@ class _RegistrationpageState extends State<Registrationpage> {
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 30),
-
                         SizedBox(
                           width: double.infinity,
                           height: 50,
-
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFE23744),
                             ),
-
                             onPressed: isLoading ? null : registerUser,
-
                             child: isLoading
-                                ? const CircularProgressIndicator(color: Colors.white)
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white)
                                 : const Text(
-                              "Register",
-                              style: TextStyle(color: Colors.white),
-                            ),
+                                    "Register",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
                           ),
                         ),
-
                         const SizedBox(height: 15),
-
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-
                             const Text("Already have an account? "),
-
                             GestureDetector(
                               onTap: () {
                                 Navigator.pop(context);
                               },
-
                               child: const Text(
                                 "Login",
                                 style: TextStyle(
@@ -320,7 +270,6 @@ class _RegistrationpageState extends State<Registrationpage> {
                                     fontWeight: FontWeight.bold),
                               ),
                             )
-
                           ],
                         )
                       ],

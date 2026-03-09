@@ -51,22 +51,22 @@ class _homePageScreenState extends State<homePageScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("NutriSense"),
-        backgroundColor: Colors.green,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const NotificationPage(),
-                ),
-              );
-            },
+          // title: const Text("NutriSense"),
+          // backgroundColor: Colors.green,
+          // actions: [
+          //   IconButton(
+          //     icon: const Icon(Icons.notifications),
+          //     onPressed: () {
+          //       Navigator.push(
+          //         context,
+          //         MaterialPageRoute(
+          //           builder: (_) => const NotificationPage(),
+          //         ),
+          //       );
+          //     },
+          //   ),
+          // ],
           ),
-        ],
-      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -93,6 +93,7 @@ class _homePageScreenState extends State<homePageScreen> {
       ),
     );
   }
+
   // -------- HERO BANNER --------
   Widget _heroBanner() {
     return Container(
@@ -258,8 +259,8 @@ class _homePageScreenState extends State<homePageScreen> {
           Expanded(
             child: Text(
               "Appointment with $selectedNutritionist on "
-                  "${selectedDate!.day}-${selectedDate!.month}-${selectedDate!.year} "
-                  "at $selectedTime",
+              "${selectedDate!.day}-${selectedDate!.month}-${selectedDate!.year} "
+              "at $selectedTime",
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
@@ -405,10 +406,10 @@ class _homePageScreenState extends State<homePageScreen> {
                           labelText: "Select Nutritionist",
                           border: OutlineInputBorder(),
                         ),
-                        value: selectedNutritionist,
+                        initialValue: selectedNutritionist,
                         items: nutritionists
                             .map((n) =>
-                            DropdownMenuItem(value: n, child: Text(n)))
+                                DropdownMenuItem(value: n, child: Text(n)))
                             .toList(),
                         onChanged: (v) {
                           setModal(() {
@@ -429,40 +430,37 @@ class _homePageScreenState extends State<homePageScreen> {
                         onTap: selectedNutritionist == null
                             ? null
                             : () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            firstDate: DateTime.now(),
-                            lastDate: DateTime.now()
-                                .add(const Duration(days: 30)),
-                          );
-                          if (picked != null) {
-                            setModal(() {
-                              selectedDate = picked;
-                              selectedTime = null;
-                            });
-                          }
-                        },
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  firstDate: DateTime.now(),
+                                  lastDate: DateTime.now()
+                                      .add(const Duration(days: 30)),
+                                );
+                                if (picked != null) {
+                                  setModal(() {
+                                    selectedDate = picked;
+                                    selectedTime = null;
+                                  });
+                                }
+                              },
                       ),
 
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: slots.map((slot) {
-                          final isBooked =
-                              bookedSlots[selectedDate]
-                                  ?.contains(
-                                  "$selectedNutritionist-$slot") ??
-                                  false;
+                          final isBooked = bookedSlots[selectedDate]
+                                  ?.contains("$selectedNutritionist-$slot") ??
+                              false;
 
                           return ChoiceChip(
                             label: Text(slot),
                             selected: selectedTime == slot,
                             onSelected: isBooked
                                 ? null
-                                : (_) =>
-                                setModal(() => selectedTime = slot),
+                                : (_) => setModal(() => selectedTime = slot),
                             backgroundColor:
-                            isBooked ? Colors.red.shade100 : null,
+                                isBooked ? Colors.red.shade100 : null,
                           );
                         }).toList(),
                       ),
@@ -474,37 +472,36 @@ class _homePageScreenState extends State<homePageScreen> {
                         padding: const EdgeInsets.only(bottom: 12),
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            minimumSize:
-                            const Size(double.infinity, 48),
+                            minimumSize: const Size(double.infinity, 48),
                           ),
                           onPressed: selectedNutritionist != null &&
-                              selectedDate != null &&
-                              selectedTime != null
+                                  selectedDate != null &&
+                                  selectedTime != null
                               ? () async {
-                            final prefs =
-                            await SharedPreferences.getInstance();
-                            List<String> notifications =
-                                prefs.getStringList("notifications") ??
-                                    [];
+                                  final prefs =
+                                      await SharedPreferences.getInstance();
+                                  List<String> notifications =
+                                      prefs.getStringList("notifications") ??
+                                          [];
 
-                            notifications.insert(
-                              0,
-                              "Appointment booked with $selectedNutritionist on "
-                                  "${selectedDate!.day}-${selectedDate!.month}-${selectedDate!.year} "
-                                  "at $selectedTime",
-                            );
+                                  notifications.insert(
+                                    0,
+                                    "Appointment booked with $selectedNutritionist on "
+                                    "${selectedDate!.day}-${selectedDate!.month}-${selectedDate!.year} "
+                                    "at $selectedTime",
+                                  );
 
-                            await prefs.setStringList(
-                                "notifications", notifications);
+                                  await prefs.setStringList(
+                                      "notifications", notifications);
 
-                            bookedSlots
-                                .putIfAbsent(selectedDate!, () => {});
-                            bookedSlots[selectedDate!]!.add(
-                                "$selectedNutritionist-$selectedTime");
+                                  bookedSlots.putIfAbsent(
+                                      selectedDate!, () => {});
+                                  bookedSlots[selectedDate!]!.add(
+                                      "$selectedNutritionist-$selectedTime");
 
-                            Navigator.pop(context);
-                            setState(() {});
-                          }
+                                  Navigator.pop(context);
+                                  setState(() {});
+                                }
                               : null,
                           child: const Text("Confirm"),
                         ),
