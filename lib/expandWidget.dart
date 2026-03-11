@@ -1,7 +1,5 @@
-import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
@@ -22,7 +20,6 @@ class _ExpandWidgetState extends State<ExpandWidget> {
   String name = "";
   String email = "";
   String phone = "";
-  String? imagePath;
 
   String goal = "";
   String healthHistory = "";
@@ -46,7 +43,6 @@ class _ExpandWidgetState extends State<ExpandWidget> {
       name = prefs.getString("name") ?? "";
       email = prefs.getString("email") ?? "";
       phone = prefs.getString("phone") ?? "";
-      imagePath = prefs.getString("imagePath");
 
       goal = prefs.getString("goal") ?? "";
       healthHistory = prefs.getString("healthHistory") ?? "";
@@ -92,47 +88,19 @@ class _ExpandWidgetState extends State<ExpandWidget> {
     }
   }
 
-  Future<void> pickImage() async {
-
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-
-    if (picked != null) {
-
-      final prefs = await SharedPreferences.getInstance();
-
-      setState(() {
-        imagePath = picked.path;
-      });
-
-      await prefs.setString("imagePath", picked.path);
-    }
-  }
-
-  Widget profileImage() {
-
-    if (imagePath != null && File(imagePath!).existsSync()) {
-      return CircleAvatar(
-        radius: 50,
-        backgroundImage: FileImage(File(imagePath!)),
-      );
-    }
-
-    return const CircleAvatar(
-      radius: 50,
-      backgroundImage: AssetImage("assets/images/profile.png"),
-    );
-  }
-
   Widget profileStat(String label, String value, IconData icon) {
     return Expanded(
       child: Column(
         children: [
           Icon(icon, color: Colors.red),
           const SizedBox(height: 6),
-          Text(value,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, fontSize: 16)),
+          Text(
+            value,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
           Text(label, style: const TextStyle(color: Colors.grey))
         ],
       ),
@@ -144,7 +112,8 @@ class _ExpandWidgetState extends State<ExpandWidget> {
       elevation: 2,
       margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
       shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12)),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: ListTile(
         leading: Icon(icon, color: Colors.red),
         title: Text(title),
@@ -175,10 +144,10 @@ class _ExpandWidgetState extends State<ExpandWidget> {
 
             const SizedBox(height: 20),
 
-            /// PROFILE HEADER
-            GestureDetector(
-              onTap: pickImage,
-              child: profileImage(),
+            /// PROFILE AVATAR
+            const CircleAvatar(
+              radius: 50,
+              child: Icon(Icons.person, size: 50),
             ),
 
             const SizedBox(height: 10),
@@ -186,8 +155,9 @@ class _ExpandWidgetState extends State<ExpandWidget> {
             Text(
               name.isEmpty ? "User" : name,
               style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold),
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
             ),
 
             const SizedBox(height: 4),
@@ -209,7 +179,8 @@ class _ExpandWidgetState extends State<ExpandWidget> {
             Card(
               margin: const EdgeInsets.symmetric(horizontal: 15),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
+                borderRadius: BorderRadius.circular(16),
+              ),
               elevation: 3,
               child: Padding(
                 padding: const EdgeInsets.all(20),
@@ -241,8 +212,7 @@ class _ExpandWidgetState extends State<ExpandWidget> {
                     if (healthHistory.isNotEmpty)
                       Row(
                         children: [
-                          const Icon(Icons.health_and_safety,
-                              color: Colors.red),
+                          const Icon(Icons.health_and_safety, color: Colors.red),
                           const SizedBox(width: 10),
                           Expanded(child: Text(healthHistory)),
                         ],
